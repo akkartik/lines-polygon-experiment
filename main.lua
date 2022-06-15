@@ -31,9 +31,10 @@ function App.initialize_globals()
 -- a shape is a table containing:
 --    a mode
 --    an array points for mode 'freehand' (raw x,y coords; freehand drawings don't pollute the points array of a drawing)
---    an array vertices for mode 'polygon', 'rectangle', 'square'
+--    an array vertices for mode 'rectangle'
 --    p1, p2 for mode 'line'
 --    center, radius for mode 'circle'
+--    center, p1, num_vertices for mode 'polygon'
 --    center, radius, start_angle, end_angle for mode 'arc'
 -- Unless otherwise specified, coord fields are normalized; a drawing is always 256 units wide
 -- The field names are carefully chosen so that switching modes in midstream

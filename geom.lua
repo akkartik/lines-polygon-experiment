@@ -25,7 +25,7 @@ function geom.on_shape(x,y, drawing, shape)
     else
       assert(false)
     end
-  elseif shape.mode == 'polygon' or shape.mode == 'rectangle' or shape.mode == 'square' then
+  elseif shape.mode == 'polygon' or shape.mode == 'rectangle' then
     return geom.on_polygon(x,y, drawing, shape)
   elseif shape.mode == 'circle' then
     local center = drawing.points[shape.center]

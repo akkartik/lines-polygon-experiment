@@ -305,49 +305,6 @@ function test_draw_rectangle_intermediate()
   -- outline of rectangle is drawn based on where the mouse is, but we can't check that so far
 end
 
-function test_draw_square()
-  io.write('\ntest_draw_square')
-  -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+300, height=300}
-  Lines = load_array{'```lines', '```', ''}
-  Line_width = 256  -- drawing coordinates 1:1 with pixels
-  App.draw()
-  check_eq(Current_drawing_mode, 'line', 'F - test_draw_square/baseline/drawing_mode')
-  check_eq(#Lines, 2, 'F - test_draw_square/baseline/#lines')
-  check_eq(Lines[1].mode, 'drawing', 'F - test_draw_square/baseline/mode')
-  check_eq(Lines[1].y, Margin_top+Drawing_padding_top, 'F - test_draw_square/baseline/y')
-  check_eq(Lines[1].h, 128, 'F - test_draw_square/baseline/y')
-  check_eq(#Lines[1].shapes, 0, 'F - test_draw_square/baseline/#shapes')
-  -- first point
-  App.run_after_mouse_press(Margin_left+35, Margin_top+Drawing_padding_top+36, 1)
-  App.run_after_keychord('s')  -- square mode
-  -- second point/first edge
-  App.mouse_move(Margin_left+42, Margin_top+Drawing_padding_top+45)
-  App.run_after_keychord('p')
-  -- override second point/first edge
-  App.mouse_move(Margin_left+65, Margin_top+Drawing_padding_top+66)
-  App.run_after_keychord('p')
-  -- release (decides which side of first edge to draw square on)
-  App.run_after_mouse_release(Margin_left+15, Margin_top+Drawing_padding_top+26, 1)
-  local drawing = Lines[1]
-  check_eq(#drawing.shapes, 1, 'F - test_draw_square/#shapes')
-  check_eq(#drawing.points, 5, 'F - test_draw_square/#points')  -- currently includes every point added
-  check_eq(drawing.shapes[1].mode, 'square', 'F - test_draw_square/shape_mode')
-  check_eq(#drawing.shapes[1].vertices, 4, 'F - test_draw_square/vertices')
-  local p = drawing.points[drawing.shapes[1].vertices[1]]
-  check_eq(p.x, 35, 'F - test_draw_square/p1:x')
-  check_eq(p.y, 36, 'F - test_draw_square/p1:y')
-  local p = drawing.points[drawing.shapes[1].vertices[2]]
-  check_eq(p.x, 65, 'F - test_draw_square/p2:x')
-  check_eq(p.y, 66, 'F - test_draw_square/p2:y')
-  local p = drawing.points[drawing.shapes[1].vertices[3]]
-  check_eq(p.x, 35, 'F - test_draw_square/p3:x')
-  check_eq(p.y, 96, 'F - test_draw_square/p3:y')
-  local p = drawing.points[drawing.shapes[1].vertices[4]]
-  check_eq(p.x, 5, 'F - test_draw_square/p4:x')
-  check_eq(p.y, 66, 'F - test_draw_square/p4:y')
-end
-
 function test_name_point()
   io.write('\ntest_name_point')
   -- create a drawing with a line

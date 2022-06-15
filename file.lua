@@ -57,7 +57,7 @@ function load_drawing(infile_next_line)
       name = shape.p2.name
       shape.p2 = Drawing.insert_point(drawing.points, shape.p2.x, shape.p2.y)
       drawing.points[shape.p2].name = name
-    elseif shape.mode == 'polygon' or shape.mode == 'rectangle' or shape.mode == 'square' then
+    elseif shape.mode == 'polygon' or shape.mode == 'rectangle' then
       for i,p in ipairs(shape.vertices) do
         local name = p.name
         shape.vertices[i] = Drawing.insert_point(drawing.points, p.x,p.y)
@@ -86,7 +86,7 @@ function store_drawing(outfile, drawing)
     elseif shape.mode == 'line' or shape.mode == 'manhattan' then
       local line = json.encode({mode=shape.mode, p1=drawing.points[shape.p1], p2=drawing.points[shape.p2]})
       outfile:write(line, '\n')
-    elseif shape.mode == 'polygon' or shape.mode == 'rectangle' or shape.mode == 'square' then
+    elseif shape.mode == 'polygon' or shape.mode == 'rectangle' then
       local obj = {mode=shape.mode, vertices={}}
       for _,p in ipairs(shape.vertices) do
         table.insert(obj.vertices, drawing.points[p])
@@ -150,7 +150,7 @@ function load_drawing_from_array(iter, a, i)
       name = shape.p2.name
       shape.p2 = Drawing.insert_point(drawing.points, shape.p2.x, shape.p2.y)
       drawing.points[shape.p2].name = name
-    elseif shape.mode == 'polygon' or shape.mode == 'rectangle' or shape.mode == 'square' then
+    elseif shape.mode == 'polygon' or shape.mode == 'rectangle' then
       for i,p in ipairs(shape.vertices) do
         local name = p.name
         shape.vertices[i] = Drawing.insert_point(drawing.points, p.x,p.y)
