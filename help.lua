@@ -30,15 +30,11 @@ function draw_help_without_mouse_pressed(drawing)
     y = y + Line_height
   end
   if Current_drawing_mode ~= 'polygon' then
-    love.graphics.print("* Press 'ctrl+g' to switch to drawing polygons", 16+30,y)
+    love.graphics.print("* Press 'ctrl+<digit>' to switch to drawing regular polygons", 16+30,y)
     y = y + Line_height
   end
   if Current_drawing_mode ~= 'rectangle' then
     love.graphics.print("* Press 'ctrl+r' to switch to drawing rectangles", 16+30,y)
-    y = y + Line_height
-  end
-  if Current_drawing_mode ~= 'square' then
-    love.graphics.print("* Press 'ctrl+s' to switch to drawing squares", 16+30,y)
     y = y + Line_height
   end
   love.graphics.print("* Press 'ctrl+=' or 'ctrl+-' to zoom in or out, ctrl+0 to reset zoom", 16+30,y)
@@ -72,9 +68,7 @@ function draw_help_with_mouse_pressed(drawing)
     end
     y = y + Line_height
   elseif Current_drawing_mode == 'polygon' then
-    love.graphics.print('* Release the mouse button to finish drawing the polygon', 16+30,y)
-    y = y + Line_height
-    love.graphics.print("* Press 'p' to add a vertex to the polygon", 16+30,y)
+    love.graphics.print('* Release the mouse button to finish drawing the regular polygon', 16+30,y)
     y = y + Line_height
   end
   love.graphics.print("* Press 'esc' then release the mouse button to cancel the current shape", 16+30,y)
@@ -92,16 +86,8 @@ function draw_help_with_mouse_pressed(drawing)
     love.graphics.print("* Press 'o' to switch to drawing circles/arcs", 16+30,y)
     y = y + Line_height
   end
-  if Current_drawing_mode ~= 'polygon' then
-    love.graphics.print("* Press 'g' to switch to drawing polygons", 16+30,y)
-    y = y + Line_height
-  end
   if Current_drawing_mode ~= 'rectangle' then
     love.graphics.print("* Press 'r' to switch to drawing rectangles", 16+30,y)
-    y = y + Line_height
-  end
-  if Current_drawing_mode ~= 'square' then
-    love.graphics.print("* Press 's' to switch to drawing squares", 16+30,y)
     y = y + Line_height
   end
   love.graphics.setColor(0,0.5,0, 0.1)
