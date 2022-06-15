@@ -18,11 +18,11 @@ Also corresponding shortcuts without `ctrl+` in the middle of a stroke.
 Here are two videos showing the difference. Drawing squares upstream using
 `s`:
 
-![before](before.webm)
+![before](before.gif)
 
 Drawing squares in this fork using `4`:
 
-![after](after.webm)
+![after](after.gif)
 
 ## Invocation
 
