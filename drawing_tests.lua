@@ -187,44 +187,6 @@ function test_draw_arc()
   check_eq(arc.end_angle, math.pi/4, 'F - test_draw_arc/end:angle')
 end
 
-function test_draw_polygon()
-  io.write('\ntest_draw_polygon')
-  -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+300, height=300}
-  Lines = load_array{'```lines', '```', ''}
-  Line_width = 256  -- drawing coordinates 1:1 with pixels
-  App.draw()
-  check_eq(Current_drawing_mode, 'line', 'F - test_draw_polygon/baseline/drawing_mode')
-  check_eq(#Lines, 2, 'F - test_draw_polygon/baseline/#lines')
-  check_eq(Lines[1].mode, 'drawing', 'F - test_draw_polygon/baseline/mode')
-  check_eq(Lines[1].y, Margin_top+Drawing_padding_top, 'F - test_draw_polygon/baseline/y')
-  check_eq(Lines[1].h, 128, 'F - test_draw_polygon/baseline/y')
-  check_eq(#Lines[1].shapes, 0, 'F - test_draw_polygon/baseline/#shapes')
-  -- first point
-  App.run_after_mouse_press(Margin_left+5, Margin_top+Drawing_padding_top+6, 1)
-  App.run_after_keychord('g')  -- polygon mode
-  -- second point
-  App.mouse_move(Margin_left+65, Margin_top+Drawing_padding_top+36)
-  App.run_after_keychord('p')  -- add point
-  -- final point
-  App.run_after_mouse_release(Margin_left+35, Margin_top+Drawing_padding_top+26, 1)
-  local drawing = Lines[1]
-  check_eq(#drawing.shapes, 1, 'F - test_draw_polygon/#shapes')
-  check_eq(#drawing.points, 3, 'F - test_draw_polygon/vertices')
-  local shape = drawing.shapes[1]
-  check_eq(shape.mode, 'polygon', 'F - test_draw_polygon/shape_mode')
-  check_eq(#shape.vertices, 3, 'F - test_draw_polygon/vertices')
-  local p = drawing.points[shape.vertices[1]]
-  check_eq(p.x, 5, 'F - test_draw_polygon/p1:x')
-  check_eq(p.y, 6, 'F - test_draw_polygon/p1:y')
-  local p = drawing.points[shape.vertices[2]]
-  check_eq(p.x, 65, 'F - test_draw_polygon/p2:x')
-  check_eq(p.y, 36, 'F - test_draw_polygon/p2:y')
-  local p = drawing.points[shape.vertices[3]]
-  check_eq(p.x, 35, 'F - test_draw_polygon/p3:x')
-  check_eq(p.y, 26, 'F - test_draw_polygon/p3:y')
-end
-
 function test_draw_rectangle()
   io.write('\ntest_draw_rectangle')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
@@ -446,64 +408,6 @@ function test_delete_line_under_mouse_pointer()
   -- only that line is deleted
   check_eq(drawing.shapes[1].mode, 'deleted', 'F - test_delete_line_under_mouse_pointer/shape:1')
   check_eq(drawing.shapes[2].mode, 'line', 'F - test_delete_line_under_mouse_pointer/shape:2')
-end
-
-function test_delete_point_from_polygon()
-  io.write('\ntest_delete_point_from_polygon')
-  -- create a drawing with two lines connected at a point
-  App.screen.init{width=Margin_left+300, height=300}
-  Lines = load_array{'```lines', '```', ''}
-  Line_width = 256  -- drawing coordinates 1:1 with pixels
-  Current_drawing_mode = 'line'
-  App.draw()
-  -- first point
-  App.run_after_mouse_press(Margin_left+5, Margin_top+Drawing_padding_top+6, 1)
-  App.run_after_keychord('g')  -- polygon mode
-  -- second point
-  App.mouse_move(Margin_left+65, Margin_top+Drawing_padding_top+36)
-  App.run_after_keychord('p')  -- add point
-  -- third point
-  App.mouse_move(Margin_left+35, Margin_top+Drawing_padding_top+26)
-  App.run_after_keychord('p')  -- add point
-  -- fourth point
-  App.run_after_mouse_release(Margin_left+14, Margin_top+Drawing_padding_top+16, 1)
-  local drawing = Lines[1]
-  check_eq(#drawing.shapes, 1, 'F - test_delete_point_from_polygon/baseline/#shapes')
-  check_eq(drawing.shapes[1].mode, 'polygon', 'F - test_delete_point_from_polygon/baseline/mode')
-  check_eq(#drawing.shapes[1].vertices, 4, 'F - test_delete_point_from_polygon/baseline/vertices')
-  -- hover on a point and delete
-  App.mouse_move(Margin_left+35, Margin_top+Drawing_padding_top+26)
-  App.run_after_keychord('C-d')
-  -- just the one point is deleted
-  check_eq(drawing.shapes[1].mode, 'polygon', 'F - test_delete_point_from_polygon/shape')
-  check_eq(#drawing.shapes[1].vertices, 3, 'F - test_delete_point_from_polygon/vertices')
-end
-
-function test_delete_point_from_polygon()
-  io.write('\ntest_delete_point_from_polygon')
-  -- create a drawing with two lines connected at a point
-  App.screen.init{width=Margin_left+300, height=300}
-  Lines = load_array{'```lines', '```', ''}
-  Line_width = 256  -- drawing coordinates 1:1 with pixels
-  Current_drawing_mode = 'line'
-  App.draw()
-  -- first point
-  App.run_after_mouse_press(Margin_left+5, Margin_top+Drawing_padding_top+6, 1)
-  App.run_after_keychord('g')  -- polygon mode
-  -- second point
-  App.mouse_move(Margin_left+65, Margin_top+Drawing_padding_top+36)
-  App.run_after_keychord('p')  -- add point
-  -- third point
-  App.run_after_mouse_release(Margin_left+14, Margin_top+Drawing_padding_top+16, 1)
-  local drawing = Lines[1]
-  check_eq(#drawing.shapes, 1, 'F - test_delete_point_from_polygon/baseline/#shapes')
-  check_eq(drawing.shapes[1].mode, 'polygon', 'F - test_delete_point_from_polygon/baseline/mode')
-  check_eq(#drawing.shapes[1].vertices, 3, 'F - test_delete_point_from_polygon/baseline/vertices')
-  -- hover on a point and delete
-  App.mouse_move(Margin_left+65, Margin_top+Drawing_padding_top+36)
-  App.run_after_keychord('C-d')
-  -- there's < 3 points left, so the whole polygon is deleted
-  check_eq(drawing.shapes[1].mode, 'deleted', 'F - test_delete_point_from_polygon')
 end
 
 function test_undo_name_point()

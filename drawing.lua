@@ -84,7 +84,7 @@ function Drawing.draw_shape(left,top, drawing, shape)
     local p1 = drawing.points[shape.p1]
     local p2 = drawing.points[shape.p2]
     love.graphics.line(Drawing.pixels(p1.x)+left,Drawing.pixels(p1.y)+top, Drawing.pixels(p2.x)+left,Drawing.pixels(p2.y)+top)
-  elseif shape.mode == 'polygon' or shape.mode == 'rectangle' then
+  elseif shape.mode == 'rectangle' then
     local prev = nil
     for _,point in ipairs(shape.vertices) do
       local curr = drawing.points[point]
@@ -136,16 +136,7 @@ function Drawing.draw_pending_shape(left,top, drawing)
       love.graphics.line(Drawing.pixels(p1.x)+left,Drawing.pixels(p1.y)+top, Drawing.pixels(p1.x)+left,Drawing.pixels(my)+top)
     end
   elseif shape.mode == 'polygon' then
-    -- don't close the loop on a pending polygon
-    local prev = nil
-    for _,point in ipairs(shape.vertices) do
-      local curr = drawing.points[point]
-      if prev then
-        love.graphics.line(Drawing.pixels(prev.x)+left,Drawing.pixels(prev.y)+top, Drawing.pixels(curr.x)+left,Drawing.pixels(curr.y)+top)
-      end
-      prev = curr
-    end
-    love.graphics.line(Drawing.pixels(prev.x)+left,Drawing.pixels(prev.y)+top, App.mouse_x(),App.mouse_y())
+    -- TODO
   elseif shape.mode == 'rectangle' then
     local pmx,pmy = App.mouse_x(), App.mouse_y()
     local first = drawing.points[shape.vertices[1]]
@@ -199,7 +190,7 @@ function Drawing.mouse_pressed(drawing, x,y, button)
   elseif Current_drawing_mode == 'line' or Current_drawing_mode == 'manhattan' then
     local j = Drawing.insert_point(drawing.points, Drawing.coord(x-Margin_left), Drawing.coord(y-drawing.y))
     drawing.pending = {mode=Current_drawing_mode, p1=j}
-  elseif Current_drawing_mode == 'polygon' or Current_drawing_mode == 'rectangle' then
+  elseif Current_drawing_mode == 'rectangle' then
     local j = Drawing.insert_point(drawing.points, Drawing.coord(x-Margin_left), Drawing.coord(y-drawing.y))
     drawing.pending = {mode=Current_drawing_mode, vertices={j}}
   elseif Current_drawing_mode == 'circle' then
@@ -279,11 +270,7 @@ function Drawing.mouse_released(x,y, button)
           table.insert(drawing.shapes, drawing.pending)
         end
       elseif drawing.pending.mode == 'polygon' then
-        local mx,my = Drawing.coord(x-Margin_left), Drawing.coord(y-drawing.y)
-        if mx >= 0 and mx < 256 and my >= 0 and my < drawing.h then
-          table.insert(drawing.pending.vertices, Drawing.insert_point(drawing.points, mx,my))
-          table.insert(drawing.shapes, drawing.pending)
-        end
+        -- TODO
       elseif drawing.pending.mode == 'rectangle' then
         assert(#drawing.pending.vertices <= 2)
         if #drawing.pending.vertices == 2 then
@@ -328,23 +315,6 @@ end
 function Drawing.keychord_pressed(chord)
   if chord == 'C-p' and not App.mouse_down(1) then
     Current_drawing_mode = 'freehand'
-  elseif chord == 'C-g' and not App.mouse_down(1) then
-    Current_drawing_mode = 'polygon'
-  elseif App.mouse_down(1) and chord == 'g' then
-    Current_drawing_mode = 'polygon'
-    local _,drawing = Drawing.current_drawing()
-    if drawing.pending.mode == 'freehand' then
-      drawing.pending.vertices = {Drawing.insert_point(drawing.points, drawing.pending.points[1].x, drawing.pending.points[1].y)}
-    elseif drawing.pending.mode == 'line' or drawing.pending.mode == 'manhattan' then
-      if drawing.pending.vertices == nil then
-        drawing.pending.vertices = {drawing.pending.p1}
-      end
-    elseif drawing.pending.mode == 'rectangle' then
-      -- reuse existing vertices
-    elseif drawing.pending.mode == 'circle' or drawing.pending.mode == 'arc' then
-      drawing.pending.vertices = {drawing.pending.center}
-    end
-    drawing.pending.mode = 'polygon'
   elseif chord == 'C-r' and not App.mouse_down(1) then
     Current_drawing_mode = 'rectangle'
   elseif App.mouse_down(1) and chord == 'r' then
@@ -356,17 +326,10 @@ function Drawing.keychord_pressed(chord)
       if drawing.pending.vertices == nil then
         drawing.pending.vertices = {drawing.pending.p1}
       end
-    elseif drawing.pending.mode == 'circle' or drawing.pending.mode == 'arc' then
+    elseif drawing.pending.mode == 'polygon' or drawing.pending.mode == 'circle' or drawing.pending.mode == 'arc' then
       drawing.pending.vertices = {drawing.pending.center}
-    elseif drawing.pending.mode == 'polygon' then
-      -- reuse existing (1-2) vertices
     end
     drawing.pending.mode = 'rectangle'
-  elseif App.mouse_down(1) and chord == 'p' and Current_drawing_mode == 'polygon' then
-    local _,drawing = Drawing.current_drawing()
-    local mx,my = Drawing.coord(App.mouse_x()-Margin_left), Drawing.coord(App.mouse_y()-drawing.y)
-    local j = Drawing.insert_point(drawing.points, mx,my)
-    table.insert(drawing.pending.vertices, j)
   elseif App.mouse_down(1) and chord == 'p' and Current_drawing_mode == 'rectangle' then
     local _,drawing = Drawing.current_drawing()
     local mx,my = Drawing.coord(App.mouse_x()-Margin_left), Drawing.coord(App.mouse_y()-drawing.y)
@@ -392,7 +355,9 @@ function Drawing.keychord_pressed(chord)
       drawing.pending.center = Drawing.insert_point(drawing.points, drawing.pending.points[1].x, drawing.pending.points[1].y)
     elseif drawing.pending.mode == 'line' or drawing.pending.mode == 'manhattan' then
       drawing.pending.center = drawing.pending.p1
-    elseif drawing.pending.mode == 'polygon' or drawing.pending.mode == 'rectangle' then
+    elseif drawing.pending.mode == 'polygon' then
+      -- reuse center
+    elseif drawing.pending.mode == 'rectangle' then
       drawing.pending.center = drawing.pending.vertices[1]
     end
     drawing.pending.mode = 'circle'
@@ -401,10 +366,10 @@ function Drawing.keychord_pressed(chord)
     local _,drawing = Drawing.current_drawing()
     if drawing.pending.mode == 'freehand' then
       drawing.pending.p1 = Drawing.insert_point(drawing.points, drawing.pending.points[1].x, drawing.pending.points[1].y)
-    elseif drawing.pending.mode == 'circle' or drawing.pending.mode == 'arc' then
-      drawing.pending.p1 = drawing.pending.center
-    elseif drawing.pending.mode == 'polygon' or drawing.pending.mode == 'rectangle' then
+    elseif drawing.pending.mode == 'rectangle' then
       drawing.pending.p1 = drawing.pending.vertices[1]
+    elseif drawing.pending.mode == 'polygon' or drawing.pending.mode == 'circle' or drawing.pending.mode == 'arc' then
+      drawing.pending.p1 = drawing.pending.center
     end
     drawing.pending.mode = 'line'
   elseif chord == 'C-l' and not App.mouse_down(1) then
@@ -416,9 +381,9 @@ function Drawing.keychord_pressed(chord)
       drawing.pending.p1 = Drawing.insert_point(drawing.points, drawing.pending.points[1].x, drawing.pending.points[1].y)
     elseif drawing.pending.mode == 'line' then
       -- do nothing
-    elseif drawing.pending.mode == 'polygon' or drawing.pending.mode == 'rectangle' then
+    elseif drawing.pending.mode == 'rectangle' then
       drawing.pending.p1 = drawing.pending.vertices[1]
-    elseif drawing.pending.mode == 'circle' or drawing.pending.mode == 'arc' then
+    elseif drawing.pending.mode == 'polygon' or drawing.pending.mode == 'circle' or drawing.pending.mode == 'arc' then
       drawing.pending.p1 = drawing.pending.center
     end
     drawing.pending.mode = 'manhattan'
@@ -458,16 +423,7 @@ function Drawing.keychord_pressed(chord)
     if drawing then
       for _,shape in ipairs(drawing.shapes) do
         if Drawing.contains_point(shape, i) then
-          if shape.mode == 'polygon' then
-            local idx = table.find(shape.vertices, i)
-            assert(idx)
-            table.remove(shape.vertices, idx)
-            if #shape.vertices < 3 then
-              shape.mode = 'deleted'
-            end
-          else
-            shape.mode = 'deleted'
-          end
+          shape.mode = 'deleted'
         end
       end
       drawing.points[i].deleted = true
@@ -577,7 +533,7 @@ function Drawing.contains_point(shape, p)
     -- not supported
   elseif shape.mode == 'line' or shape.mode == 'manhattan' then
     return shape.p1 == p or shape.p2 == p
-  elseif shape.mode == 'polygon' or shape.mode == 'rectangle' then
+  elseif shape.mode == 'rectangle' then
     return table.find(shape.vertices, p)
   elseif shape.mode == 'circle' then
     return shape.center == p
