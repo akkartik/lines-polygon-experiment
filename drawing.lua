@@ -195,6 +195,7 @@ function Drawing.draw_polygon(n, cx,cy, x1,y1)
   local theta = 2*math.pi/n
   local prevx,prevy = x1,y1
   for i=1,n do
+--?     print(prevx-cx,prevy-cy)
     x,y = geom.rotate(cx,cy, prevx,prevy, theta)
     love.graphics.line(prevx,prevy, x,y)
     prevx,prevy = x,y

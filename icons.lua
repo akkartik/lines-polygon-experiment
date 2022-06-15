@@ -33,11 +33,31 @@ function icon.manhattan(x, y)
 end
 
 function icon.polygon(x, y)
-  love.graphics.line(x+10,y+2, x+18,y+10)
-  love.graphics.line(x+18,y+10, x+16,y+18)
-  love.graphics.line(x+16,y+18, x+4,y+18)
-  love.graphics.line(x+4,y+18, x+2,y+10)
-  love.graphics.line(x+2,y+10, x+10,y+2)
+  local offsets
+  if Current_drawing_submode == 3 then
+    offsets = {{10,4}, {4,16}, {16,16}}
+  elseif Current_drawing_submode == 4 then
+    offsets = {{4,4}, {4,16}, {16,16}, {16,4}}
+  elseif Current_drawing_submode == 5 then
+    offsets = {{10,2}, {18,10}, {16,18}, {4,18}, {2,10}}
+  elseif Current_drawing_submode == 6 then
+    offsets = {{7,4}, {13,4}, {16,10}, {13,16}, {7,16}, {4,10}}
+  elseif Current_drawing_submode == 7 then
+    -- not quite right
+    offsets = {{7,4}, {12,5}, {15,11}, {12,15}, {6,17}, {4,12}, {4,8}}
+  elseif Current_drawing_submode == 8 then
+    offsets = {{4,4}, {2,10}, {4,16}, {10,18}, {16,16}, {18,10}, {16,4}, {10,2}}
+  elseif Current_drawing_submode == 9 then
+    -- not quite right
+    offsets = {{10,4}, {6,8}, {5,12}, {4,16}, {8,18}, {12,18}, {16,16}, {15,11}, {14,8}}
+  else
+    print(Current_drawing_submode)
+    assert(false)
+  end
+  for i=1,#offsets-1 do
+    love.graphics.line(x+offsets[i][1],y+offsets[i][2], x+offsets[i+1][1],y+offsets[i+1][2])
+  end
+  love.graphics.line(x+offsets[#offsets][1],y+offsets[#offsets][2], x+offsets[1][1],y+offsets[1][2])
 end
 
 function icon.rectangle(x, y)
