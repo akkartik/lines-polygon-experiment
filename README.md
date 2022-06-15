@@ -6,6 +6,15 @@ modifications break something.
 
 http://akkartik.name/lines.html
 
+This fork experiments with number-based keyboard shortcuts within drawings:
+
+  * `ctrl+2` for lines,
+  * `ctrl+3` for triangles,
+  * `ctrl+4` for squares,
+  * etc.
+
+Also corresponding shortcuts without `ctrl+` in the middle of a stroke.
+
 ## Invocation
 
 Like all LÖVE apps, lines.love can be invoked either from a terminal or

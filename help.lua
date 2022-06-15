@@ -18,7 +18,7 @@ function draw_help_without_mouse_pressed(drawing)
     y = y + Line_height
   end
   if Current_drawing_mode ~= 'line' then
-    love.graphics.print("* Press 'ctrl+l' to switch to drawing lines", Margin_left+30,y)
+    love.graphics.print("* Press 'ctrl+2' to switch to drawing lines", Margin_left+30,y)
     y = y + Line_height
   end
   if Current_drawing_mode ~= 'manhattan' then
@@ -75,9 +75,11 @@ function draw_help_with_mouse_pressed(drawing)
   y = y + Line_height
   y = y + Line_height
   if Current_drawing_mode ~= 'line' then
-    love.graphics.print("* Press 'l' to switch to drawing lines", Margin_left+30,y)
+    love.graphics.print("* Press '2' to switch to drawing lines", Margin_left+30,y)
     y = y + Line_height
   end
+  love.graphics.print("* Press other digits to switch to polygons with corresponding vertices", Margin_left+30,y)
+  y = y + Line_height
   if Current_drawing_mode ~= 'manhattan' then
     love.graphics.print("* Press 'm' to switch to drawing horizontal/vertical lines", Margin_left+30,y)
     y = y + Line_height
