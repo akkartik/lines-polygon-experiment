@@ -33,11 +33,11 @@ function icon.manhattan(x, y)
 end
 
 function icon.polygon(x, y)
-  love.graphics.line(x+8,y+2, x+14,y+2)
-  love.graphics.line(x+14,y+2, x+18,y+10)
-  love.graphics.line(x+18,y+10, x+10,y+18)
-  love.graphics.line(x+10,y+18, x+4,y+12)
-  love.graphics.line(x+4,y+12, x+8,y+2)
+  love.graphics.line(x+10,y+2, x+18,y+10)
+  love.graphics.line(x+18,y+10, x+16,y+18)
+  love.graphics.line(x+16,y+18, x+4,y+18)
+  love.graphics.line(x+4,y+18, x+2,y+10)
+  love.graphics.line(x+2,y+10, x+10,y+2)
 end
 
 function icon.rectangle(x, y)
