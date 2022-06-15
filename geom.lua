@@ -27,6 +27,9 @@ function geom.on_shape(x,y, drawing, shape)
     end
   elseif shape.mode == 'rectangle' then
     return geom.on_polygon(x,y, drawing, shape)
+  elseif shape.mode == 'polygon' then
+    -- TODO
+    return false
   elseif shape.mode == 'circle' then
     local center = drawing.points[shape.center]
     return geom.dist(center.x,center.y, x,y) == shape.radius
@@ -164,6 +167,13 @@ function geom.angle_between(ox,oy, x,y, s,e)
   end
   angle = angle+math.pi*2
   return s <= angle and angle <= e
+end
+
+function geom.rotate(cx,cy, x,y, theta)
+  local x2,y2 = x-cx,y-cy
+  local x3 = x2*math.cos(theta) - y2*math.sin(theta)
+  local y3 = x2*math.sin(theta) + y2*math.cos(theta)
+  return cx+x3,cy+y3
 end
 
 function geom.dist(x1,y1, x2,y2) return ((x2-x1)^2+(y2-y1)^2)^0.5 end

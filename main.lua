@@ -61,6 +61,7 @@ Recent_mouse = {}  -- when selecting text, avoid recomputing some state on every
 Cursor_x, Cursor_y = 0, 0  -- in pixels
 
 Current_drawing_mode = 'line'
+Current_drawing_submode = nil
 Previous_drawing_mode = nil
 
 -- values for tests

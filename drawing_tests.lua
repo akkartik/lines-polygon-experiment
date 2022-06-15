@@ -187,6 +187,32 @@ function test_draw_arc()
   check_eq(arc.end_angle, math.pi/4, 'F - test_draw_arc/end:angle')
 end
 
+function test_draw_polygon()
+  io.write('\ntest_draw_polygon')
+  -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
+  App.screen.init{width=Margin_left+300, height=300}
+  Lines = load_array{'```lines', '```', ''}
+  Line_width = 256  -- drawing coordinates 1:1 with pixels
+  App.draw()
+  check_eq(Current_drawing_mode, 'line', 'F - test_draw_polygon/baseline/drawing_mode')
+  check_eq(#Lines, 2, 'F - test_draw_polygon/baseline/#lines')
+  check_eq(Lines[1].mode, 'drawing', 'F - test_draw_polygon/baseline/mode')
+  check_eq(Lines[1].y, Margin_top+Drawing_padding_top, 'F - test_draw_polygon/baseline/y')
+  check_eq(Lines[1].h, 128, 'F - test_draw_polygon/baseline/y')
+  check_eq(#Lines[1].shapes, 0, 'F - test_draw_polygon/baseline/#shapes')
+  -- start a stroke
+  App.run_after_mouse_press(Margin_left+35, Margin_top+Drawing_padding_top+36, 1)
+  -- switch to polygon mode
+  App.run_after_keychord('5')
+  App.run_after_mouse_release(Margin_left+55, Margin_top+Drawing_padding_top+26, 1)
+  local drawing = Lines[1]
+  check_eq(#drawing.shapes, 1, 'F - test_draw_polygon/#shapes')
+  check_eq(#drawing.points, 2, 'F - test_draw_polygon/vertices')
+  local shape = drawing.shapes[1]
+  check_eq(shape.mode, 'polygon', 'F - test_draw_polygon/shape_mode')
+  check_eq(shape.num_vertices, 5, 'F - test_draw_polygon/vertices')
+end
+
 function test_draw_rectangle()
   io.write('\ntest_draw_rectangle')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)

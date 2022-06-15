@@ -63,6 +63,13 @@ function load_drawing(infile_next_line)
         shape.vertices[i] = Drawing.insert_point(drawing.points, p.x,p.y)
         drawing.points[shape.vertices[i]].name = name
       end
+    elseif shape.mode == 'polygon' then
+      local name = shape.center.name
+      shape.center = Drawing.insert_point(drawing.points, shape.center.x,shape.center.y)
+      drawing.points[shape.center].name = name
+      local name = shape.p1.name
+      shape.p1 = Drawing.insert_point(drawing.points, shape.p1.x,shape.p1.y)
+      drawing.points[shape.p1].name = name
     elseif shape.mode == 'circle' or shape.mode == 'arc' then
       local name = shape.center.name
       shape.center = Drawing.insert_point(drawing.points, shape.center.x,shape.center.y)
@@ -93,6 +100,8 @@ function store_drawing(outfile, drawing)
       end
       local line = json.encode(obj)
       outfile:write(line, '\n')
+    elseif shape.mode == 'polygon' then
+      outfile:write(json.encode({mode=shape.mode, num_vertices=shape.num_vertices, center=drawing.points[shape.center], p1=drawing.points[shape.p1]}), '\n')
     elseif shape.mode == 'circle' then
       outfile:write(json.encode({mode=shape.mode, center=drawing.points[shape.center], radius=shape.radius}), '\n')
     elseif shape.mode == 'arc' then
@@ -156,6 +165,13 @@ function load_drawing_from_array(iter, a, i)
         shape.vertices[i] = Drawing.insert_point(drawing.points, p.x,p.y)
         drawing.points[shape.vertices[i]].name = name
       end
+    elseif shape.mode == 'polygon' then
+      local name = shape.center.name
+      shape.center = Drawing.insert_point(drawing.points, shape.center.x,shape.center.y)
+      drawing.points[shape.center].name = name
+      local name = shape.p1.name
+      shape.p1 = Drawing.insert_point(drawing.points, shape.p1.x,shape.p1.y)
+      drawing.points[shape.p1].name = name
     elseif shape.mode == 'circle' or shape.mode == 'arc' then
       local name = shape.center.name
       shape.center = Drawing.insert_point(drawing.points, shape.center.x,shape.center.y)
