@@ -15,6 +15,15 @@ This fork experiments with number-based keyboard shortcuts within drawings:
 
 Also corresponding shortcuts without `ctrl+` in the middle of a stroke.
 
+Here are two videos showing the difference. Drawing squares upstream using
+`s`:
+
+![before](before.webm)
+
+Drawing squares in this fork using `4`:
+
+![after](after.webm)
+
 ## Invocation
 
 Like all LÖVE apps, lines.love can be invoked either from a terminal or
