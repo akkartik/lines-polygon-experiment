@@ -339,7 +339,7 @@ end
 function Drawing.keychord_pressed(chord)
   if chord == 'C-p' and not App.mouse_down(1) then
     Current_drawing_mode = 'freehand'
-  elseif App.mouse_down(1) and chord == 'l' then
+  elseif App.mouse_down(1) and chord == '2' then
     Current_drawing_mode = 'line'
     local _,drawing = Drawing.current_drawing()
     if drawing.pending.mode == 'freehand' then
@@ -350,7 +350,7 @@ function Drawing.keychord_pressed(chord)
       drawing.pending.p1 = drawing.pending.center
     end
     drawing.pending.mode = 'line'
-  elseif chord == 'C-l' and not App.mouse_down(1) then
+  elseif chord == 'C-2' and not App.mouse_down(1) then
     Current_drawing_mode = 'line'
   elseif App.mouse_down(1) and chord == 'm' then
     Current_drawing_mode = 'manhattan'
