@@ -133,18 +133,12 @@ found anything amiss: http://akkartik.name/contact
 
 ## Mirrors and Forks
 
-Updates to lines.love can be downloaded from the following mirrors in addition
-to the website above:
-* https://github.com/akkartik/lines.love
-* https://repo.or.cz/lines.love.git
-* https://codeberg.org/akkartik/lines.love
-* https://tildegit.org/akkartik/lines.love
-* https://git.tilde.institute/akkartik/lines.love
-* https://git.sr.ht/~akkartik/lines.love
-* https://pagure.io/lines.love
+This repo is a fork of the main project at http://akkartik.name/lines.html.
+Updates to it can be downloaded from:
 
-Forks of lines.love are encouraged. If you show me your fork, I'll link to it
-here.
+* https://github.com/akkartik/lines-polygon-experiment
+
+Further forks are encouraged. If you show me your fork, I'll link to it here.
 
 ## Feedback
 
