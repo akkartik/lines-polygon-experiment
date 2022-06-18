@@ -24,6 +24,10 @@ Drawing squares in this fork using `4`:
 
 ![after](after.gif)
 
+Be careful switching to this fork from the upstream version and _vice versa_.
+Polygons created with one won't be read with the other. Best make a backup as
+well before such experiments.
+
 ## Invocation
 
 Like all LÖVE apps, lines.love can be invoked either from a terminal or
