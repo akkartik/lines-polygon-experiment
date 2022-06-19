@@ -70,6 +70,16 @@ function draw_help_with_mouse_pressed(drawing)
   elseif Current_drawing_mode == 'polygon' then
     love.graphics.print('* Release the mouse button to finish drawing the regular polygon', Margin_left+30,y)
     y = y + Line_height
+  elseif Current_drawing_mode == 'rectangle' then
+    if #drawing.pending.vertices < 2 then
+      love.graphics.print("* Press 'p' to add a vertex to the rectangle", Margin_left+30,y)
+      y = y + Line_height
+    else
+      love.graphics.print('* Release the mouse button to finish drawing the rectangle', Margin_left+30,y)
+      y = y + Line_height
+      love.graphics.print("* Press 'p' to replace the second vertex of the rectangle", Margin_left+30,y)
+      y = y + Line_height
+    end
   end
   love.graphics.print("* Press 'esc' then release the mouse button to cancel the current shape", Margin_left+30,y)
   y = y + Line_height
