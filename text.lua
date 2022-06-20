@@ -139,7 +139,9 @@ end
 
 function Text.textinput(t)
   if App.mouse_down(1) then return end
-  if App.ctrl_down() or App.alt_down() or App.cmd_down() then return end
+  assert(not App.ctrl_down())
+  if App.alt_down() then return end
+  assert(not App.cmd_down())
   if Selection1.line then
     Text.delete_selection()
   end
@@ -170,6 +172,7 @@ function Text.keychord_pressed(chord)
     local before_line = Cursor1.line
     local before = snapshot(before_line)
     Text.insert_return()
+    Selection1 = {}
     if (Cursor_y + Line_height) > App.screen.height then
       Text.snap_cursor_to_bottom_of_screen()
     end
@@ -266,15 +269,11 @@ function Text.keychord_pressed(chord)
     record_undo_event({before=before, after=snapshot(Cursor1.line)})
   --== shortcuts that move the cursor
   elseif chord == 'left' then
-    if Selection1.line then
-      Selection1 = {}
-    end
     Text.left()
+    Selection1 = {}
   elseif chord == 'right' then
-    if Selection1.line then
-      Selection1 = {}
-    end
     Text.right()
+    Selection1 = {}
   elseif chord == 'S-left' then
     if Selection1.line == nil then
       Selection1 = {line=Cursor1.line, pos=Cursor1.pos}
@@ -287,15 +286,11 @@ function Text.keychord_pressed(chord)
     Text.right()
   -- C- hotkeys reserved for drawings, so we'll use M-
   elseif chord == 'M-left' then
-    if Selection1.line then
-      Selection1 = {}
-    end
     Text.word_left()
+    Selection1 = {}
   elseif chord == 'M-right' then
-    if Selection1.line then
-      Selection1 = {}
-    end
     Text.word_right()
+    Selection1 = {}
   elseif chord == 'M-S-left' then
     if Selection1.line == nil then
       Selection1 = {line=Cursor1.line, pos=Cursor1.pos}
@@ -307,14 +302,8 @@ function Text.keychord_pressed(chord)
     end
     Text.word_right()
   elseif chord == 'home' then
-    if Selection1.line then
-      Selection1 = {}
-    end
     Cursor1.pos = 1
   elseif chord == 'end' then
-    if Selection1.line then
-      Selection1 = {}
-    end
     Cursor1.pos = utf8.len(Lines[Cursor1.line].data) + 1
   elseif chord == 'S-home' then
     if Selection1.line == nil then
@@ -327,15 +316,11 @@ function Text.keychord_pressed(chord)
     end
     Cursor1.pos = utf8.len(Lines[Cursor1.line].data) + 1
   elseif chord == 'up' then
-    if Selection1.line then
-      Selection1 = {}
-    end
     Text.up()
+    Selection1 = {}
   elseif chord == 'down' then
-    if Selection1.line then
-      Selection1 = {}
-    end
     Text.down()
+    Selection1 = {}
   elseif chord == 'S-up' then
     if Selection1.line == nil then
       Selection1 = {line=Cursor1.line, pos=Cursor1.pos}
@@ -347,15 +332,11 @@ function Text.keychord_pressed(chord)
     end
     Text.down()
   elseif chord == 'pageup' then
-    if Selection1.line then
-      Selection1 = {}
-    end
     Text.pageup()
+    Selection1 = {}
   elseif chord == 'pagedown' then
-    if Selection1.line then
-      Selection1 = {}
-    end
     Text.pagedown()
+    Selection1 = {}
   elseif chord == 'S-pageup' then
     if Selection1.line == nil then
       Selection1 = {line=Cursor1.line, pos=Cursor1.pos}

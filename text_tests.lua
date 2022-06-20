@@ -186,6 +186,28 @@ function test_click_on_wrapping_line_containing_non_ascii()
   check_eq(Cursor1.pos, 15, 'F - test_click_on_wrapping_line_containing_non_ascii/cursor')  -- one more than the number of UTF-8 code-points
 end
 
+function test_select_text()
+  io.write('\ntest_select_text')
+  -- display a line of text
+  App.screen.init{width=80, height=80}
+  Lines = load_array{'abc def'}
+  Line_width = 75
+  Cursor1 = {line=1, pos=1}
+  Screen_top1 = {line=1, pos=1}
+  Screen_bottom1 = {}
+  App.draw()
+  -- select a letter
+  App.fake_key_press('lshift')
+  App.run_after_keychord('S-right')
+  App.fake_key_release('lshift')
+  App.keyreleased('lshift')
+  -- selection persists even after shift is released
+  check_eq(Selection1.line, 1, 'F - test_select_text/selection:line')
+  check_eq(Selection1.pos, 1, 'F - test_select_text/selection:pos')
+  check_eq(Cursor1.line, 1, 'F - test_select_text/cursor:line')
+  check_eq(Cursor1.pos, 2, 'F - test_select_text/cursor:pos')
+end
+
 function test_edit_after_click_resets_selection()
   io.write('\ntest_edit_after_click_resets_selection')
   -- display a line of text
@@ -202,6 +224,41 @@ function test_edit_after_click_resets_selection()
   App.run_after_keychord('return')
   -- selection is reset since shift key is not pressed
   check_nil(Selection1.line, 'F - test_edit_after_click_resets_selection')
+end
+
+function test_edit_deletes_selection()
+  io.write('\ntest_edit_deletes_selection')
+  -- display a line of text with some part selected
+  App.screen.init{width=80, height=80}
+  Lines = load_array{'abc'}
+  Line_width = 75
+  Cursor1 = {line=1, pos=1}
+  Selection1 = {line=1, pos=2}
+  Screen_top1 = {line=1, pos=1}
+  Screen_bottom1 = {}
+  App.draw()
+  -- press a key
+  App.run_after_textinput('x')
+  -- selected text is deleted and replaced with the key
+  check_eq(Lines[1].data, 'xbc', 'F - test_edit_deletes_selection')
+end
+
+function test_copy_does_not_reset_selection()
+  io.write('\ntest_copy_does_not_reset_selection')
+  -- display a line of text with a selection
+  App.screen.init{width=80, height=80}
+  Lines = load_array{'abc'}
+  Line_width = 75
+  Cursor1 = {line=1, pos=1}
+  Selection1 = {line=1, pos=2}
+  Screen_top1 = {line=1, pos=1}
+  Screen_bottom1 = {}
+  App.draw()
+  -- copy selection
+  App.run_after_keychord('C-c')
+  check_eq(App.clipboard, 'a', 'F - test_copy_does_not_reset_selection/clipboard')
+  -- selection is reset since shift key is not pressed
+  check(Selection1.line, 'F - test_copy_does_not_reset_selection')
 end
 
 function test_edit_wrapping_text()
@@ -1259,4 +1316,27 @@ function test_undo_delete_text()
   App.screen.check(y, 'defg', 'F - test_undo_delete_text/screen:2')
   y = y + Line_height
   App.screen.check(y, 'xyz', 'F - test_undo_delete_text/screen:3')
+end
+
+function test_undo_restores_selection()
+  io.write('\ntest_undo_restores_selection')
+  -- display a line of text with some part selected
+  App.screen.init{width=80, height=80}
+  Lines = load_array{'abc'}
+  Line_width = 75
+  Cursor1 = {line=1, pos=1}
+  Selection1 = {line=1, pos=2}
+  Screen_top1 = {line=1, pos=1}
+  Screen_bottom1 = {}
+  App.draw()
+  -- delete selected text
+  App.run_after_textinput('x')
+  check_eq(Lines[1].data, 'xbc', 'F - test_undo_restores_selection/baseline')
+  check_nil(Selection1.line, 'F - test_undo_restores_selection/baseline:selection')
+  -- undo
+  App.run_after_keychord('C-z')
+  App.run_after_keychord('C-z')
+  -- selection is restored
+  check_eq(Selection1.line, 1, 'F - test_undo_restores_selection/line')
+  check_eq(Selection1.pos, 2, 'F - test_undo_restores_selection/pos')
 end
