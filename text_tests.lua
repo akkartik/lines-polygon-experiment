@@ -261,6 +261,28 @@ function test_edit_deletes_selection()
   check_eq(Lines[1].data, 'xbc', 'F - test_edit_deletes_selection')
 end
 
+function test_edit_with_shift_key_deletes_selection()
+  io.write('\ntest_edit_with_shift_key_deletes_selection')
+  -- display a line of text with some part selected
+  App.screen.init{width=80, height=80}
+  Lines = load_array{'abc'}
+  Line_width = 75
+  Cursor1 = {line=1, pos=1}
+  Selection1 = {line=1, pos=2}
+  Screen_top1 = {line=1, pos=1}
+  Screen_bottom1 = {}
+  App.draw()
+  -- mimic precise keypresses for a capital letter
+  App.fake_key_press('lshift')
+  App.keypressed('d')
+  App.textinput('D')
+  App.keyreleased('d')
+  App.fake_key_release('lshift')
+  -- selected text is deleted and replaced with the key
+  check_nil(Selection1.line, 'F - test_edit_with_shift_key_deletes_selection')
+  check_eq(Lines[1].data, 'Dbc', 'F - test_edit_with_shift_key_deletes_selection/data')
+end
+
 function test_copy_does_not_reset_selection()
   io.write('\ntest_copy_does_not_reset_selection')
   -- display a line of text with a selection
@@ -315,6 +337,31 @@ function test_paste_replaces_selection()
   -- selection is reset since shift key is not pressed
   -- selection includes the newline, so it's also deleted
   check_eq(Lines[1].data, 'xyzdef', 'F - test_paste_replaces_selection')
+end
+
+function test_deleting_selection_may_scroll()
+  io.write('\ntest_deleting_selection_may_scroll')
+  -- display lines 2/3/4
+  App.screen.init{width=120, height=60}
+  Lines = load_array{'abc', 'def', 'ghi', 'jkl'}
+  Line_width = App.screen.width
+  Cursor1 = {line=3, pos=2}
+  Screen_top1 = {line=2, pos=1}
+  Screen_bottom1 = {}
+  App.draw()
+  local y = Margin_top
+  App.screen.check(y, 'def', 'F - test_deleting_selection_may_scroll/baseline/screen:1')
+  y = y + Line_height
+  App.screen.check(y, 'ghi', 'F - test_deleting_selection_may_scroll/baseline/screen:2')
+  y = y + Line_height
+  App.screen.check(y, 'jkl', 'F - test_deleting_selection_may_scroll/baseline/screen:3')
+  -- set up a selection starting above the currently displayed page
+  Selection1 = {line=1, pos=2}
+  -- delete selection
+  App.run_after_keychord('backspace')
+  -- page scrolls up
+  check_eq(Screen_top1.line, 1, 'F - test_deleting_selection_may_scroll')
+  check_eq(Lines[1].data, 'ahi', 'F - test_deleting_selection_may_scroll/data')
 end
 
 function test_edit_wrapping_text()
