@@ -192,6 +192,11 @@ function initialize_font_settings(font_height)
 end
 
 function App.filedropped(file)
+  -- first make sure to save edits on any existing file
+  if Next_save then
+    save_to_disk(Lines, Filename)
+  end
+  -- clear the slate for the new file
   App.initialize_globals()  -- in particular, forget all undo history
   Filename = file:getFilename()
   file:open('r')
@@ -325,7 +330,9 @@ end
 
 -- make sure to save before quitting
 function love.quit()
-  save_to_disk(Lines, Filename)
+  if Next_save then
+    save_to_disk(Lines, Filename)
+  end
 end
 
 function App.mousepressed(x,y, mouse_button)
