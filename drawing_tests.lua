@@ -24,9 +24,8 @@ function test_draw_line()
   io.write('\ntest_draw_line')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
   Filename = 'foo'
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   check_eq(#Lines, 2, 'F - test_draw_line/baseline/#lines')
@@ -68,9 +67,8 @@ end
 function test_draw_horizontal_line()
   io.write('\ntest_draw_horizontal_line')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'manhattan'
   App.draw()
   check_eq(#Lines, 2, 'F - test_draw_horizontal_line/baseline/#lines')
@@ -96,9 +94,8 @@ end
 function test_draw_circle()
   io.write('\ntest_draw_circle')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   check_eq(#Lines, 2, 'F - test_draw_circle/baseline/#lines')
@@ -124,9 +121,8 @@ end
 function test_keys_do_not_affect_shape_when_mouse_up()
   io.write('\ntest_keys_do_not_affect_shape_when_mouse_up')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   -- hover over drawing and press 'o' without holding mouse
@@ -140,9 +136,8 @@ end
 function test_draw_circle_mid_stroke()
   io.write('\ntest_draw_circle_mid_stroke')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   check_eq(#Lines, 2, 'F - test_draw_circle_mid_stroke/baseline/#lines')
@@ -168,9 +163,8 @@ end
 function test_draw_arc()
   io.write('\ntest_draw_arc')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'circle'
   App.draw()
   check_eq(#Lines, 2, 'F - test_draw_arc/baseline/#lines')
@@ -199,9 +193,8 @@ end
 function test_draw_polygon()
   io.write('\ntest_draw_polygon')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   App.draw()
   check_eq(Current_drawing_mode, 'line', 'F - test_draw_polygon/baseline/drawing_mode')
   check_eq(#Lines, 2, 'F - test_draw_polygon/baseline/#lines')
@@ -225,9 +218,8 @@ end
 function test_draw_rectangle()
   io.write('\ntest_draw_rectangle')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   App.draw()
   check_eq(Current_drawing_mode, 'line', 'F - test_draw_rectangle/baseline/drawing_mode')
   check_eq(#Lines, 2, 'F - test_draw_rectangle/baseline/#lines')
@@ -269,9 +261,8 @@ end
 function test_draw_rectangle_intermediate()
   io.write('\ntest_draw_rectangle_intermediate')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   App.draw()
   check_eq(Current_drawing_mode, 'line', 'F - test_draw_rectangle_intermediate/baseline/drawing_mode')
   check_eq(#Lines, 2, 'F - test_draw_rectangle_intermediate/baseline/#lines')
@@ -306,9 +297,8 @@ function test_name_point()
   io.write('\ntest_name_point')
   -- create a drawing with a line
   Filename = 'foo'
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   -- draw a line
@@ -349,9 +339,8 @@ function test_move_point()
   io.write('\ntest_move_point')
   -- create a drawing with a line
   Filename = 'foo'
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   App.run_after_mouse_press(Margin_left+5, Margin_top+Drawing_padding_top+6, 1)
@@ -406,9 +395,8 @@ function test_move_point_on_manhattan_line()
   io.write('\ntest_move_point_on_manhattan_line')
   -- create a drawing with a manhattan line
   Filename = 'foo'
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'manhattan'
   App.draw()
   App.run_after_mouse_press(Margin_left+5, Margin_top+Drawing_padding_top+6, 1)
@@ -432,9 +420,8 @@ function test_delete_lines_at_point()
   io.write('\ntest_delete_lines_at_point')
   -- create a drawing with two lines connected at a point
   Filename = 'foo'
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   App.run_after_mouse_press(Margin_left+5, Margin_top+Drawing_padding_top+6, 1)
@@ -461,9 +448,8 @@ end
 function test_delete_line_under_mouse_pointer()
   io.write('\ntest_delete_line_under_mouse_pointer')
   -- create a drawing with two lines connected at a point
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   App.run_after_mouse_press(Margin_left+5, Margin_top+Drawing_padding_top+6, 1)
@@ -486,9 +472,8 @@ function test_undo_name_point()
   io.write('\ntest_undo_name_point')
   -- create a drawing with a line
   Filename = 'foo'
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   -- draw a line
@@ -532,9 +517,8 @@ function test_undo_move_point()
   io.write('\ntest_undo_move_point')
   -- create a drawing with a line
   Filename = 'foo'
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   App.run_after_mouse_press(Margin_left+5, Margin_top+Drawing_padding_top+6, 1)
@@ -582,9 +566,8 @@ function test_undo_delete_point()
   io.write('\ntest_undo_delete_point')
   -- create a drawing with two lines connected at a point
   Filename = 'foo'
-  App.screen.init{width=Margin_left+300, height=300}
+  App.screen.init{width=Margin_width+256, height=300}  -- drawing coordinates 1:1 with pixels
   Lines = load_array{'```lines', '```', ''}
-  Line_width = Margin_left+256  -- drawing coordinates 1:1 with pixels
   Current_drawing_mode = 'line'
   App.draw()
   App.run_after_mouse_press(Margin_left+5, Margin_top+Drawing_padding_top+6, 1)

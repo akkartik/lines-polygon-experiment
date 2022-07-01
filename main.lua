@@ -20,7 +20,8 @@ function App.initialize_globals()
 -- a text is a table with:
 --    mode = 'text',
 --    string data,
---    a (y) coord in pixels (updated while painting screen),
+--    startpos, the index of data the line starts rendering from (if currently on screen), can only be >1 for topmost line on screen
+--    starty, the y coord in pixels
 --    some cached data that's blown away and recomputed when data changes:
 --      fragments: snippets of rendered love.graphics.Text, guaranteed to not wrap
 --      screen_line_starting_pos: optional array of grapheme indices if it wraps over more than one screen line
@@ -52,6 +53,9 @@ Lines = {{mode='text', data=''}}
 --
 -- Most of the time we'll only persist positions in schema 1, translating to
 -- schema 2 when that's convenient.
+--
+-- Make sure these coordinates are never aliased, so that changing one causes
+-- action at a distance.
 Screen_top1 = {line=1, pos=1}  -- position of start of screen line at top of screen
 Cursor1 = {line=1, pos=1}  -- position of cursor
 Screen_bottom1 = {line=1, pos=1}  -- position of start of screen line at bottom of screen
@@ -74,6 +78,8 @@ Em = App.newText(love.graphics.getFont(), 'm')
 
 Margin_top = 15
 Margin_left = 25
+Margin_right = 25
+Margin_width = Margin_left + Margin_right
 
 Drawing_padding_top = 10
 Drawing_padding_bottom = 10
@@ -97,34 +103,40 @@ Last_resize_time = nil
 -- blinking cursor
 Cursor_time = 0
 
--- line-width indicator
-Line_width_hover = nil
-
 end  -- App.initialize_globals
 
 function App.initialize(arg)
   love.keyboard.setTextInput(true)  -- bring up keyboard on touch screen
   love.keyboard.setKeyRepeat(true)
 
-  if arg[1] == '-geometry' then
-    initialize_window_geometry(arg[2])
-    table.remove(arg, 2)
-    table.remove(arg, 1)
-  else
-    initialize_window_geometry()
-  end
+  love.graphics.setBackgroundColor(1,1,1)
 
-  initialize_font_settings(20)
---?   Line_width = 80
+  if love.filesystem.getInfo('config') then
+    load_settings()
+  else
+    load_defaults()
+  end
 
   if #arg > 0 then
     Filename = arg[1]
-  end
-  Lines = load_from_disk(Filename)
-  for i,line in ipairs(Lines) do
-    if line.mode == 'text' then
-      Cursor1.line = i
-      break
+    Lines = load_from_disk(Filename)
+    Screen_top1 = {line=1, pos=1}
+    Cursor1 = {line=1, pos=1}
+    for i,line in ipairs(Lines) do
+      if line.mode == 'text' then
+        Cursor1.line = i
+        break
+      end
+    end
+  else
+    Lines = load_from_disk(Filename)
+    if Lines[Cursor1.line].mode ~= 'text' then
+      for i,line in ipairs(Lines) do
+        if line.mode == 'text' then
+          Cursor1.line = i
+          break
+        end
+      end
     end
   end
   love.window.setTitle('lines.love - '..Filename)
@@ -137,45 +149,51 @@ function App.initialize(arg)
     jit.off()
     jit.flush()
   end
-end  -- App.initialize
+end
 
-function initialize_window_geometry(geometry_spec)
-  local geometry_initialized
-  if geometry_spec then
-    geometry_initialized = parse_geometry_spec(geometry_spec)
-  end
-  if not geometry_initialized then
-    -- maximize window
-    love.window.setMode(0, 0)  -- maximize
-    App.screen.width, App.screen.height, App.screen.flags = love.window.getMode()
-    -- shrink slightly to account for window decoration
-    App.screen.width = App.screen.width-100
-    App.screen.height = App.screen.height-100
-  end
+function load_settings()
+  -- maximize window to determine maximum allowable dimensions
+  love.window.setMode(0, 0)  -- maximize
+  App.screen.width, App.screen.height, App.screen.flags = love.window.getMode()
+  --
+  local settings = json.decode(love.filesystem.read('config'))
+  love.window.setPosition(settings.x, settings.y, settings.displayindex)
+  App.screen.width, App.screen.height, App.screen.flags = love.window.getMode()
   App.screen.flags.resizable = true
   App.screen.flags.minwidth = math.min(App.screen.width, 200)
   App.screen.flags.minheight = math.min(App.screen.width, 200)
-  love.window.updateMode(App.screen.width, App.screen.height, App.screen.flags)
+  App.screen.width, App.screen.height = settings.width, settings.height
+  love.window.setMode(App.screen.width, App.screen.height, App.screen.flags)
+  Filename = settings.filename
+  initialize_font_settings(settings.font_height)
+  Screen_top1 = settings.screen_top
+  Cursor1 = settings.cursor
 end
 
-function parse_geometry_spec(geometry_spec)
-  local width, height, x, y = geometry_spec:match('(%d+)x(%d+)%+(%d+)%+(%d+)')
-  if width == nil then
-    print('invalid geometry spec: '..geometry_spec)
-    print('expected format: {width}x{height}+{x}+{y}')
-    return false
-  end
-  App.screen.width = math.floor(tonumber(width))
-  App.screen.height = math.floor(tonumber(height))
-  App.screen.flags = {x=math.floor(tonumber(x)), y=math.floor(tonumber(y))}
-  return true
+function load_defaults()
+  initialize_font_settings(20)
+  initialize_window_geometry()
+end
+
+function initialize_window_geometry()
+  -- maximize window
+  love.window.setMode(0, 0)  -- maximize
+  App.screen.width, App.screen.height, App.screen.flags = love.window.getMode()
+  -- shrink slightly to account for window decoration
+  App.screen.width = 40*App.width(Em)
+  App.screen.height = App.screen.height-100
+  App.screen.flags.resizable = true
+  App.screen.flags.minwidth = math.min(App.screen.width, 200)
+  App.screen.flags.minheight = math.min(App.screen.width, 200)
+  love.window.setMode(App.screen.width, App.screen.height, App.screen.flags)
 end
 
 function App.resize(w, h)
 --?   print(("Window resized to width: %d and height: %d."):format(w, h))
   App.screen.width, App.screen.height = w, h
-  Line_width = math.min(40*App.width(Em), App.screen.width-50)
   Text.redraw_all()
+  Selection1 = {}  -- no support for shift drag while we're resizing
+  Text.tweak_screen_top_and_cursor()
   Last_resize_time = App.getTime()
 end
 
@@ -185,10 +203,6 @@ function initialize_font_settings(font_height)
   Line_height = math.floor(font_height*1.3)
 
   Em = App.newText(love.graphics.getFont(), 'm')
-
-  -- maximum width available to either text or drawings, in pixels
-  -- readable text width is 50-75 chars
-  Line_width = math.min(40*App.width(Em), App.screen.width-50)
 end
 
 function App.filedropped(file)
@@ -213,31 +227,9 @@ end
 
 function App.draw()
   Button_handlers = {}
-  love.graphics.setColor(1, 1, 1)
-  love.graphics.rectangle('fill', 0, 0, App.screen.width-1, App.screen.height-1)
---?   love.graphics.setColor(0, 1, 0)
---?   love.graphics.line(Line_width,0, Line_width,App.screen.height)
   love.graphics.setColor(0, 0, 0)
 
-  -- some hysteresis while resizing
-  if Last_resize_time then
-    if App.getTime() - Last_resize_time < 0.1 then
-      return
-    else
-      Last_resize_time = nil
-    end
-  end
-
-  -- line-width indicator
-  button('line-width', {x=Line_width-4,y=Margin_top-10, w=10,h=10, color={1,1,1},
-    icon = icon.line_width,
-    onpress1 = function() Line_width_hover = App.getTime() end,
-  })
-  if Line_width_hover then
-    love.graphics.setColor(0.7,0.7,0.7)
-    love.graphics.line(Line_width,Margin_top+2, Line_width,App.screen.height)
-  end
-
+--?   print(Screen_top1.line, Screen_top1.pos, Cursor1.line, Cursor1.pos)
   assert(Text.le1(Screen_top1, Cursor1))
   Cursor_y = -1
   local y = Margin_top
@@ -276,9 +268,13 @@ function App.draw()
         Drawing.draw(line)
         y = y + Drawing.pixels(line.h) + Drawing_padding_bottom
       else
---?         print('text')
-        line.y = y
-        y, Screen_bottom1.pos = Text.draw(line, Line_width, line_index)
+        line.starty = y
+        line.startpos = 1
+        if line_index == Screen_top1.line then
+          line.startpos = Screen_top1.pos
+        end
+--?         print('text.draw', y, line_index)
+        y, Screen_bottom1.pos = Text.draw(line, line_index)
         y = y + Line_height
 --?         print('=> y', y)
       end
@@ -303,18 +299,6 @@ function App.update(dt)
       Last_resize_time = nil
     end
   end
-  -- update Line_width with some hysteresis while the indicator is dragged
-  if Line_width_hover then
-    if App.getTime() - Line_width_hover > 0.1 then
-      Line_width = App.mouse_x()
-      Text.redraw_all()
-      if App.mouse_down(1) then
-        Line_width_hover = App.getTime()
-      else
-        Line_width_hover = nil
-      end
-    end
-  end
   Drawing.update(dt)
   if Next_save and Next_save < App.getTime() then
     save_to_disk(Lines, Filename)
@@ -328,22 +312,25 @@ function schedule_save()
   end
 end
 
--- make sure to save before quitting
 function love.quit()
+  -- make sure to save before quitting
   if Next_save then
     save_to_disk(Lines, Filename)
   end
+  -- save some important settings
+  local x,y,displayindex = love.window.getPosition()
+  local settings = {
+    x=x, y=y, displayindex=displayindex,
+    width=App.screen.width, height=App.screen.height,
+    font_height=Font_height, filename=Filename, screen_top=Screen_top1, cursor=Cursor1}
+  love.filesystem.write('config', json.encode(settings))
 end
 
 function App.mousepressed(x,y, mouse_button)
   if Search_term then return end
+--?   print('press', Selection1.line, Selection1.pos)
   propagate_to_button_handlers(x,y, mouse_button)
 
-  -- we seem to sometimes get phantom clicks if the mouse moves down into text while adjusting line-width
-  if Line_width_hover then
-    Selection1 = {}
-    return
-  end
   for line_index,line in ipairs(Lines) do
     if line.mode == 'text' then
       if Text.in_line(line_index,line, x,y) then
@@ -360,7 +347,8 @@ function App.mousepressed(x,y, mouse_button)
         Old_selection1 = Selection1
         Mousepress_shift = App.shift_down()
         Selection1 = {line=line_index, pos=Text.to_pos_on_line(line, x, y)}
---?         print('selection')
+--?         print('selection', Selection1.line, Selection1.pos)
+        break
       end
     elseif line.mode == 'drawing' then
       if Drawing.in_drawing(line, x, y) then
@@ -368,6 +356,7 @@ function App.mousepressed(x,y, mouse_button)
         Lines.current_drawing = line
         Drawing.before = snapshot(line_index)
         Drawing.mouse_pressed(line, x,y, button)
+        break
       end
     end
   end
@@ -375,6 +364,7 @@ end
 
 function App.mousereleased(x,y, button)
   if Search_term then return end
+--?   print('release')
   if Lines.current_drawing then
     Drawing.mouse_released(x,y, button)
     schedule_save()
@@ -388,7 +378,7 @@ function App.mousereleased(x,y, button)
         if Text.in_line(line_index,line, x,y) then
 --?           print('reset selection')
           Cursor1 = {line=line_index, pos=Text.to_pos_on_line(line, x, y)}
---?           print(Cursor1.line, Cursor1.pos)
+--?           print('cursor', Cursor1.line, Cursor1.pos)
           if Mousepress_shift then
             if Old_selection1.line == nil then
               Selection1 = Old_cursor1
@@ -397,10 +387,11 @@ function App.mousereleased(x,y, button)
             end
           end
           Old_cursor1, Old_selection1, Mousepress_shift = nil
+          break
         end
       end
     end
---?     print('select:', Selection1.line, Selection1.pos)
+--?     print('selection:', Selection1.line, Selection1.pos)
   end
 end
 
