@@ -422,6 +422,7 @@ end
 
 function App.keychord_pressed(chord, key)
   if Selection1.line and
+      not Lines.current_drawing and
       -- printable character created using shift key => delete selection
       -- (we're not creating any ctrl-shift- or alt-shift- combinations using regular/printable keys)
       (not App.shift_down() or utf8.len(key) == 1) and
@@ -518,8 +519,7 @@ function App.keychord_pressed(chord, key)
         Text.insert_at_cursor(c)
       end
     end
-    App.draw()
-    if Cursor_y >= App.screen.height - Line_height then
+    if Text.cursor_past_screen_bottom() then
       Text.snap_cursor_to_bottom_of_screen()
     end
     schedule_save()
@@ -533,11 +533,6 @@ function App.keychord_pressed(chord, key)
       Drawing.keychord_pressed(chord)
       record_undo_event({before=before, after=snapshot(drawing_index)})
       schedule_save()
-    end
-  elseif chord == 'escape' and App.mouse_down(1) then
-    local _,drawing = Drawing.current_drawing()
-    if drawing then
-      drawing.pending = {}
     end
   elseif chord == 'escape' and not App.mouse_down(1) then
     for _,line in ipairs(Lines) do

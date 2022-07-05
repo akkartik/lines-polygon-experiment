@@ -122,7 +122,9 @@ function Drawing.draw_pending_shape(left,top, drawing)
   if shape.mode == nil then
     -- nothing pending
   elseif shape.mode == 'freehand' then
-    Drawing.draw_shape(left,top, drawing, shape)
+    local shape_copy = deepcopy(shape)
+    Drawing.smoothen(shape_copy)
+    Drawing.draw_shape(left,top, drawing, shape_copy)
   elseif shape.mode == 'line' then
     local mx,my = Drawing.coord(App.mouse_x()-left), Drawing.coord(App.mouse_y()-top)
     if mx < 0 or mx >= 256 or my < 0 or my >= drawing.h then
@@ -290,8 +292,11 @@ function Drawing.mouse_released(x,y, button)
   elseif Lines.current_drawing then
     local drawing = Lines.current_drawing
     if drawing.pending then
-      if drawing.pending.mode == 'freehand' then
+      if drawing.pending.mode == nil then
+        -- nothing pending
+      elseif drawing.pending.mode == 'freehand' then
         -- the last point added during update is good enough
+        Drawing.smoothen(drawing.pending)
         table.insert(drawing.shapes, drawing.pending)
       elseif drawing.pending.mode == 'line' then
         local mx,my = Drawing.coord(x-Margin_left), Drawing.coord(y-drawing.y)
@@ -525,6 +530,9 @@ function Drawing.keychord_pressed(chord)
     if drawing then
       drawing.show_help = true
     end
+  elseif chord == 'escape' and App.mouse_down(1) then
+    local _,drawing = Drawing.current_drawing()
+    drawing.pending = {}
   end
 end
 
@@ -650,6 +658,19 @@ function Drawing.contains_point(shape, p)
   else
     print(shape.mode)
     assert(false)
+  end
+end
+
+function Drawing.smoothen(shape)
+  assert(shape.mode == 'freehand')
+  for _=1,7 do
+    for i=2,#shape.points-1 do
+      local a = shape.points[i-1]
+      local b = shape.points[i]
+      local c = shape.points[i+1]
+      b.x = (a.x + b.x + c.x)/3
+      b.y = (a.y + b.y + c.y)/3
+    end
   end
 end
 
