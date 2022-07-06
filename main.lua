@@ -335,6 +335,8 @@ end
 
 function App.mousepressed(x,y, mouse_button)
   if Search_term then return end
+  -- ensure cursor is visible immediately after it moves
+  Cursor_time = 0
 --?   print('press', Selection1.line, Selection1.pos)
   propagate_to_button_handlers(x,y, mouse_button)
 
@@ -372,6 +374,8 @@ end
 function App.mousereleased(x,y, button)
   if Search_term then return end
 --?   print('release')
+  -- ensure cursor is visible immediately after it moves
+  Cursor_time = 0
   if Lines.current_drawing then
     Drawing.mouse_released(x,y, button)
     schedule_save()
@@ -403,6 +407,8 @@ function App.mousereleased(x,y, button)
 end
 
 function App.textinput(t)
+  -- ensure cursor is visible immediately after it moves
+  Cursor_time = 0
   for _,line in ipairs(Lines) do line.y = nil end  -- just in case we scroll
   if Search_term then
     Search_term = Search_term..t
@@ -421,6 +427,8 @@ function App.textinput(t)
 end
 
 function App.keychord_pressed(chord, key)
+  -- ensure cursor is visible immediately after it moves
+  Cursor_time = 0
   if Selection1.line and
       not Lines.current_drawing and
       -- printable character created using shift key => delete selection
