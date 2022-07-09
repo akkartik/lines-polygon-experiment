@@ -193,7 +193,7 @@ function App.resize(w, h)
   App.screen.width, App.screen.height = w, h
   Text.redraw_all()
   Selection1 = {}  -- no support for shift drag while we're resizing
-  Text.tweak_screen_top_and_cursor()
+  Text.tweak_screen_top_and_cursor(Margin_left, App.screen.height-Margin_right)
   Last_resize_time = App.getTime()
 end
 
@@ -227,8 +227,8 @@ end
 
 function App.draw()
   Button_handlers = {}
-  love.graphics.setColor(0, 0, 0)
 
+  love.graphics.setColor(0, 0, 0)
 --?   print(Screen_top1.line, Screen_top1.pos, Cursor1.line, Cursor1.pos)
   assert(Text.le1(Screen_top1, Cursor1))
   Cursor_y = -1
@@ -274,7 +274,7 @@ function App.draw()
         line.startpos = Screen_top1.pos
       end
 --?       print('text.draw', y, line_index)
-      y, Screen_bottom1.pos = Text.draw(line, line_index)
+      y, Screen_bottom1.pos = Text.draw(line, line_index, line.starty, Margin_left, App.screen.width-Margin_right)
       y = y + Line_height
 --?       print('=> y', y)
     end
@@ -340,7 +340,7 @@ function App.mousepressed(x,y, mouse_button)
 
   for line_index,line in ipairs(Lines) do
     if line.mode == 'text' then
-      if Text.in_line(line_index,line, x,y) then
+      if Text.in_line(line, x,y, Margin_left, App.screen.width-Margin_right) then
         -- delicate dance between cursor, selection and old cursor/selection
         -- scenarios:
         --  regular press+release: sets cursor, clears selection
@@ -353,7 +353,10 @@ function App.mousepressed(x,y, mouse_button)
         Old_cursor1 = Cursor1
         Old_selection1 = Selection1
         Mousepress_shift = App.shift_down()
-        Selection1 = {line=line_index, pos=Text.to_pos_on_line(line, x, y)}
+        Selection1 = {
+            line=line_index,
+            pos=Text.to_pos_on_line(line, x, y, Margin_left, App.screen.width-Margin_right),
+        }
 --?         print('selection', Selection1.line, Selection1.pos)
         break
       end
@@ -384,9 +387,12 @@ function App.mousereleased(x,y, button)
   else
     for line_index,line in ipairs(Lines) do
       if line.mode == 'text' then
-        if Text.in_line(line_index,line, x,y) then
+        if Text.in_line(line, x,y, Margin_left, App.screen.width-Margin_right) then
 --?           print('reset selection')
-          Cursor1 = {line=line_index, pos=Text.to_pos_on_line(line, x, y)}
+          Cursor1 = {
+              line=line_index,
+              pos=Text.to_pos_on_line(line, x, y, Margin_left, App.screen.width-Margin_right),
+          }
 --?           print('cursor', Cursor1.line, Cursor1.pos)
           if Mousepress_shift then
             if Old_selection1.line == nil then
@@ -436,7 +442,7 @@ function App.keychord_pressed(chord, key)
       -- (we're not creating any ctrl-shift- or alt-shift- combinations using regular/printable keys)
       (not App.shift_down() or utf8.len(key) == 1) and
       chord ~= 'C-c' and chord ~= 'C-x' and chord ~= 'backspace' and backspace ~= 'delete' and not App.is_cursor_movement(chord) then
-    Text.delete_selection()
+    Text.delete_selection(Margin_left, App.screen.width-Margin_right)
   end
   if Search_term then
     if chord == 'escape' then
@@ -508,7 +514,7 @@ function App.keychord_pressed(chord, key)
     end
   elseif chord == 'C-x' then
     for _,line in ipairs(Lines) do line.y = nil end  -- just in case we scroll
-    local s = Text.cut_selection()
+    local s = Text.cut_selection(Margin_left, App.screen.width-Margin_right)
     if s then
       App.setClipboardText(s)
     end
@@ -529,7 +535,7 @@ function App.keychord_pressed(chord, key)
       end
     end
     if Text.cursor_past_screen_bottom() then
-      Text.snap_cursor_to_bottom_of_screen()
+      Text.snap_cursor_to_bottom_of_screen(Margin_left, App.screen.height-Margin_right)
     end
     schedule_save()
     record_undo_event({before=before, after=snapshot(before_line, Cursor1.line)})
