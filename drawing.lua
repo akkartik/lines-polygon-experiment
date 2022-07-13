@@ -26,7 +26,8 @@ function Drawing.draw(State, line)
     return
   end
 
-  local mx,my = Drawing.coord(pmx-State.left, State.width), Drawing.coord(pmy-line.y, State.width)
+  local mx = Drawing.coord(pmx-State.left, State.width)
+  local my = Drawing.coord(pmy-line.y, State.width)
 
   for _,shape in ipairs(line.shapes) do
     assert(shape)
@@ -37,18 +38,21 @@ function Drawing.draw(State, line)
     end
     Drawing.draw_shape(line, shape, line.y, State.left,State.right)
   end
+
+  local function px(x) return Drawing.pixels(x, State.width)+State.left end
+  local function py(y) return Drawing.pixels(y, State.width)+line.y end
   for i,p in ipairs(line.points) do
     if p.deleted == nil then
       if Drawing.near(p, mx,my, State.width) then
         App.color(Focus_stroke_color)
-        love.graphics.circle('line', Drawing.pixels(p.x, State.width)+State.left,Drawing.pixels(p.y, State.width)+line.y, Same_point_distance)
+        love.graphics.circle('line', px(p.x),py(p.y), Same_point_distance)
       else
         App.color(Stroke_color)
-        love.graphics.circle('fill', Drawing.pixels(p.x, State.width)+State.left,Drawing.pixels(p.y, State.width)+line.y, 2)
+        love.graphics.circle('fill', px(p.x),py(p.y), 2)
       end
       if p.name then
         -- TODO: clip
-        local x,y = Drawing.pixels(p.x, State.width)+State.left+5, Drawing.pixels(p.y, State.width)+line.y+5
+        local x,y = px(p.x)+5, py(p.y)+5
         love.graphics.print(p.name, x,y)
         if State.current_drawing_mode == 'name' and i == line.pending.target_point then
           -- create a faint red box for the name
@@ -71,43 +75,43 @@ end
 
 function Drawing.draw_shape(drawing, shape, top, left,right)
   local width = right-left
+  local function px(x) return Drawing.pixels(x, width)+left end
+  local function py(y) return Drawing.pixels(y, width)+top end
   if shape.mode == 'freehand' then
     local prev = nil
     for _,point in ipairs(shape.points) do
       if prev then
-        love.graphics.line(Drawing.pixels(prev.x, width)+left,Drawing.pixels(prev.y, width)+top, Drawing.pixels(point.x, width)+left,Drawing.pixels(point.y, width)+top)
+        love.graphics.line(px(prev.x),py(prev.y), px(point.x),py(point.y))
       end
       prev = point
     end
   elseif shape.mode == 'line' or shape.mode == 'manhattan' then
     local p1 = drawing.points[shape.p1]
     local p2 = drawing.points[shape.p2]
-    love.graphics.line(Drawing.pixels(p1.x, width)+left,Drawing.pixels(p1.y, width)+top, Drawing.pixels(p2.x, width)+left,Drawing.pixels(p2.y, width)+top)
+    love.graphics.line(px(p1.x),py(p1.y), px(p2.x),py(p2.y))
   elseif shape.mode == 'rectangle' then
     local prev = nil
     for _,point in ipairs(shape.vertices) do
       local curr = drawing.points[point]
       if prev then
-        love.graphics.line(Drawing.pixels(prev.x, width)+left,Drawing.pixels(prev.y, width)+top, Drawing.pixels(curr.x, width)+left,Drawing.pixels(curr.y, width)+top)
+        love.graphics.line(px(prev.x),py(prev.y), px(curr.x),py(curr.y))
       end
       prev = curr
     end
     -- close the loop
     local curr = drawing.points[shape.vertices[1]]
-    love.graphics.line(Drawing.pixels(prev.x, width)+left,Drawing.pixels(prev.y, width)+top, Drawing.pixels(curr.x, width)+left,Drawing.pixels(curr.y, width)+top)
+    love.graphics.line(px(prev.x),py(prev.y), px(curr.x),py(curr.y))
   elseif shape.mode == 'polygon' then
     local center = drawing.points[shape.center]
-    local cx,cy = Drawing.pixels(center.x, width)+left, Drawing.pixels(center.y, width)+top
     local p1 = drawing.points[shape.p1]
-    local x,y = Drawing.pixels(p1.x, width)+left, Drawing.pixels(p1.y, width)+top
-    Drawing.draw_polygon(shape.num_vertices, cx,cy, x,y)
+    Drawing.draw_polygon(shape.num_vertices, px(center.x),py(center.y), px(p1.x),py(p1.y))
   elseif shape.mode == 'circle' then
     -- TODO: clip
     local center = drawing.points[shape.center]
-    love.graphics.circle('line', Drawing.pixels(center.x, width)+left,Drawing.pixels(center.y, width)+top, Drawing.pixels(shape.radius, width))
+    love.graphics.circle('line', px(center.x),py(center.y), Drawing.pixels(shape.radius, width))
   elseif shape.mode == 'arc' then
     local center = drawing.points[shape.center]
-    love.graphics.arc('line', 'open', Drawing.pixels(center.x, width)+left,Drawing.pixels(center.y, width)+top, Drawing.pixels(shape.radius, width), shape.start_angle, shape.end_angle, 360)
+    love.graphics.arc('line', 'open', px(center.x),py(center.y), Drawing.pixels(shape.radius, width), shape.start_angle, shape.end_angle, 360)
   elseif shape.mode == 'deleted' then
     -- ignore
   else
@@ -118,6 +122,11 @@ end
 
 function Drawing.draw_pending_shape(State, drawing, top, left,right)
   local width = right-left
+  local pmx,pmy = App.mouse_x(), App.mouse_y()
+  local function px(x) return Drawing.pixels(x, width)+left end
+  local function py(y) return Drawing.pixels(y, width)+top end
+  local mx = Drawing.coord(pmx-left, width)
+  local my = Drawing.coord(pmy-top, width)
   local shape = drawing.pending
   if shape.mode == nil then
     -- nothing pending
@@ -126,61 +135,53 @@ function Drawing.draw_pending_shape(State, drawing, top, left,right)
     Drawing.smoothen(shape_copy)
     Drawing.draw_shape(drawing, shape_copy, top, left,right)
   elseif shape.mode == 'line' then
-    local mx,my = Drawing.coord(App.mouse_x()-left, width), Drawing.coord(App.mouse_y()-top, width)
     if mx < 0 or mx >= 256 or my < 0 or my >= drawing.h then
       return
     end
     local p1 = drawing.points[shape.p1]
-    love.graphics.line(Drawing.pixels(p1.x, width)+left,Drawing.pixels(p1.y, width)+top, Drawing.pixels(mx, width)+left,Drawing.pixels(my, width)+top)
+    love.graphics.line(px(p1.x),py(p1.y), pmx,pmy)
   elseif shape.mode == 'manhattan' then
-    local mx,my = Drawing.coord(App.mouse_x()-left, width), Drawing.coord(App.mouse_y()-top, width)
     if mx < 0 or mx >= 256 or my < 0 or my >= drawing.h then
       return
     end
     local p1 = drawing.points[shape.p1]
     if math.abs(mx-p1.x) > math.abs(my-p1.y) then
-      love.graphics.line(Drawing.pixels(p1.x, width)+left,Drawing.pixels(p1.y, width)+top, Drawing.pixels(mx, width)+left,Drawing.pixels(p1.y, width)+top)
+      love.graphics.line(px(p1.x),py(p1.y), pmx,     py(p1.y))
     else
-      love.graphics.line(Drawing.pixels(p1.x, width)+left,Drawing.pixels(p1.y, width)+top, Drawing.pixels(p1.x, width)+left,Drawing.pixels(my, width)+top)
+      love.graphics.line(px(p1.x),py(p1.y), px(p1.x),pmy)
     end
   elseif shape.mode == 'rectangle' then
-    local pmx,pmy = App.mouse_x(), App.mouse_y()
     local first = drawing.points[shape.vertices[1]]
     if #shape.vertices == 1 then
-      love.graphics.line(Drawing.pixels(first.x, width)+left,Drawing.pixels(first.y, width)+top, pmx,pmy)
+      love.graphics.line(px(first.x),py(first.y), pmx,pmy)
       return
     end
     local second = drawing.points[shape.vertices[2]]
-    local mx,my = Drawing.coord(pmx-left, width), Drawing.coord(pmy-top, width)
     local thirdx,thirdy, fourthx,fourthy = Drawing.complete_rectangle(first.x,first.y, second.x,second.y, mx,my)
-    love.graphics.line(Drawing.pixels(first.x, width)+left,Drawing.pixels(first.y, width)+top, Drawing.pixels(second.x, width)+left,Drawing.pixels(second.y, width)+top)
-    love.graphics.line(Drawing.pixels(second.x, width)+left,Drawing.pixels(second.y, width)+top, Drawing.pixels(thirdx, width)+left,Drawing.pixels(thirdy, width)+top)
-    love.graphics.line(Drawing.pixels(thirdx, width)+left,Drawing.pixels(thirdy, width)+top, Drawing.pixels(fourthx, width)+left,Drawing.pixels(fourthy, width)+top)
-    love.graphics.line(Drawing.pixels(fourthx, width)+left,Drawing.pixels(fourthy, width)+top, Drawing.pixels(first.x, width)+left,Drawing.pixels(first.y, width)+top)
+    love.graphics.line(px(first.x),py(first.y), px(second.x),py(second.y))
+    love.graphics.line(px(second.x),py(second.y), px(thirdx),py(thirdy))
+    love.graphics.line(px(thirdx),py(thirdy), px(fourthx),py(fourthy))
+    love.graphics.line(px(fourthx),py(fourthy), px(first.x),py(first.y))
   elseif shape.mode == 'polygon' then
     local center = drawing.points[shape.center]
-    local mx,my = Drawing.coord(App.mouse_x()-left, width), Drawing.coord(App.mouse_y()-top, width)
     if mx < 0 or mx >= 256 or my < 0 or my >= drawing.h then
       return
     end
-    local cx,cy = Drawing.pixels(center.x, width)+left, Drawing.pixels(center.y, width)+top
-    Drawing.draw_polygon(State.current_drawing_submode, cx,cy, App.mouse_x(),App.mouse_y())
+    Drawing.draw_polygon(State.current_drawing_submode, px(center.x),py(center.y), pmx,pmy)
   elseif shape.mode == 'circle' then
     local center = drawing.points[shape.center]
-    local mx,my = Drawing.coord(App.mouse_x()-left, width), Drawing.coord(App.mouse_y()-top, width)
     if mx < 0 or mx >= 256 or my < 0 or my >= drawing.h then
       return
     end
-    local cx,cy = Drawing.pixels(center.x, width)+left, Drawing.pixels(center.y, width)+top
-    love.graphics.circle('line', cx,cy, geom.dist(cx,cy, App.mouse_x(),App.mouse_y()))
+    local cx,cy = px(center.x), py(center.y)
+    love.graphics.circle('line', cx,cy, geom.dist(cx,cy, pmx,pmy))
   elseif shape.mode == 'arc' then
     local center = drawing.points[shape.center]
-    local mx,my = Drawing.coord(App.mouse_x()-left, width), Drawing.coord(App.mouse_y()-top, width)
     if mx < 0 or mx >= 256 or my < 0 or my >= drawing.h then
       return
     end
     shape.end_angle = geom.angle_with_hint(center.x,center.y, mx,my, shape.end_angle)
-    local cx,cy = Drawing.pixels(center.x, width)+left, Drawing.pixels(center.y, width)+top
+    local cx,cy = px(center.x), py(center.y)
     love.graphics.arc('line', 'open', cx,cy, Drawing.pixels(shape.radius, width), shape.start_angle, shape.end_angle, 360)
   elseif shape.mode == 'move' then
     -- nothing pending; changes are immediately committed
@@ -211,19 +212,21 @@ function Drawing.in_drawing(drawing, x,y, left,right)
 end
 
 function Drawing.mouse_pressed(State, drawing, x,y, button)
+  local cx = Drawing.coord(x-State.left, State.width)
+  local cy = Drawing.coord(y-drawing.y, State.width)
   if State.current_drawing_mode == 'freehand' then
-    drawing.pending = {mode=State.current_drawing_mode, points={{x=Drawing.coord(x-State.left, State.width), y=Drawing.coord(y-drawing.y, State.width)}}}
+    drawing.pending = {mode=State.current_drawing_mode, points={{x=cx, y=cy}}}
   elseif State.current_drawing_mode == 'line' or State.current_drawing_mode == 'manhattan' then
-    local j = Drawing.insert_point(drawing.points, Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width))
+    local j = Drawing.find_or_insert_point(drawing.points, cx, cy, State.width)
     drawing.pending = {mode=State.current_drawing_mode, p1=j}
   elseif State.current_drawing_mode == 'rectangle' then
-    local j = Drawing.insert_point(drawing.points, Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width))
+    local j = Drawing.find_or_insert_point(drawing.points, cx, cy, State.width)
     drawing.pending = {mode=State.current_drawing_mode, vertices={j}}
   elseif State.current_drawing_mode == 'polygon' then
-    local j = Drawing.insert_point(drawing.points, Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width))
+    local j = Drawing.find_or_insert_point(drawing.points, cx, cy, State.width)
     drawing.pending = {mode=State.current_drawing_mode, num_vertices=State.current_drawing_submode, center=j}
   elseif State.current_drawing_mode == 'circle' then
-    local j = Drawing.insert_point(drawing.points, Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width))
+    local j = Drawing.find_or_insert_point(drawing.points, cx, cy, State.width)
     drawing.pending = {mode=State.current_drawing_mode, center=j}
   elseif State.current_drawing_mode == 'move' then
     -- all the action is in mouse_released
@@ -240,21 +243,21 @@ function Drawing.update(State)
   if State.lines.current_drawing == nil then return end
   local drawing = State.lines.current_drawing
   assert(drawing.mode == 'drawing')
-  local x, y = App.mouse_x(), App.mouse_y()
+  local pmx, pmy = App.mouse_x(), App.mouse_y()
+  local mx = Drawing.coord(pmx-State.left, State.width)
+  local my = Drawing.coord(pmy-drawing.y, State.width)
   if App.mouse_down(1) then
-    if Drawing.in_drawing(drawing, x,y, State.left,State.right) then
+    if Drawing.in_drawing(drawing, pmx,pmy, State.left,State.right) then
       if drawing.pending.mode == 'freehand' then
-        table.insert(drawing.pending.points, {x=Drawing.coord(App.mouse_x()-State.left, State.width), y=Drawing.coord(App.mouse_y()-drawing.y, State.width)})
+        table.insert(drawing.pending.points, {x=mx, y=my})
       elseif drawing.pending.mode == 'move' then
-        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width)
         drawing.pending.target_point.x = mx
         drawing.pending.target_point.y = my
         Drawing.relax_constraints(drawing, drawing.pending.target_point_index)
       end
     end
   elseif State.current_drawing_mode == 'move' then
-    if Drawing.in_drawing(drawing, x, y, State.left,State.right) then
-      local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width)
+    if Drawing.in_drawing(drawing, pmx, pmy, State.left,State.right) then
       drawing.pending.target_point.x = mx
       drawing.pending.target_point.y = my
       Drawing.relax_constraints(drawing, drawing.pending.target_point_index)
