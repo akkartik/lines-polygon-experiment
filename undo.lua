@@ -6,52 +6,52 @@
 -- TODO: highlight stuff inserted by any undo/redo operation
 -- TODO: coalesce multiple similar operations
 
-function record_undo_event(data)
-  History[Next_history] = data
-  Next_history = Next_history+1
-  for i=Next_history,#History do
-    History[i] = nil
+function record_undo_event(State, data)
+  State.history[State.next_history] = data
+  State.next_history = State.next_history+1
+  for i=State.next_history,#State.history do
+    State.history[i] = nil
   end
 end
 
-function undo_event()
-  if Next_history > 1 then
---?     print('moving to history', Next_history-1)
-    Next_history = Next_history-1
-    local result = History[Next_history]
+function undo_event(State)
+  if State.next_history > 1 then
+--?     print('moving to history', State.next_history-1)
+    State.next_history = State.next_history-1
+    local result = State.history[State.next_history]
     return result
   end
 end
 
-function redo_event()
-  if Next_history <= #History then
---?     print('restoring history', Next_history+1)
-    local result = History[Next_history]
-    Next_history = Next_history+1
+function redo_event(State)
+  if State.next_history <= #State.history then
+--?     print('restoring history', State.next_history+1)
+    local result = State.history[State.next_history]
+    State.next_history = State.next_history+1
     return result
   end
 end
 
 -- Copy all relevant global state.
 -- Make copies of objects; the rest of the app may mutate them in place, but undo requires immutable histories.
-function snapshot(s,e)
+function snapshot(State, s,e)
   -- Snapshot everything by default, but subset if requested.
   assert(s)
   if e == nil then
     e = s
   end
-  assert(#Lines > 0)
+  assert(#State.lines > 0)
   if s < 1 then s = 1 end
-  if s > #Lines then s = #Lines end
+  if s > #State.lines then s = #State.lines end
   if e < 1 then e = 1 end
-  if e > #Lines then e = #Lines end
+  if e > #State.lines then e = #State.lines end
   -- compare with App.initialize_globals
   local event = {
-    screen_top=deepcopy(Screen_top1),
-    selection=deepcopy(Selection1),
-    cursor=deepcopy(Cursor1),
+    screen_top=deepcopy(State.screen_top1),
+    selection=deepcopy(State.selection1),
+    cursor=deepcopy(State.cursor1),
     current_drawing_mode=Drawing_mode,
-    previous_drawing_mode=Previous_drawing_mode,
+    previous_drawing_mode=State.previous_drawing_mode,
     lines={},
     start_line=s,
     end_line=e,
@@ -59,7 +59,7 @@ function snapshot(s,e)
   }
   -- deep copy lines without cached stuff like text fragments
   for i=s,e do
-    local line = Lines[i]
+    local line = State.lines[i]
     if line.mode == 'text' then
       table.insert(event.lines, {mode='text', data=line.data})
     elseif line.mode == 'drawing' then
