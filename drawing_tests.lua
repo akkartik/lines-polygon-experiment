@@ -5,7 +5,7 @@
 function test_creating_drawing_saves()
   io.write('\ntest_creating_drawing_saves')
   App.screen.init{width=120, height=60}
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  Editor_state = edit.initialize_test_state()
   Editor_state.filename = 'foo'
   Editor_state.lines = load_array{}
   edit.draw(Editor_state)
@@ -25,8 +25,8 @@ function test_draw_line()
   io.write('\ntest_draw_line')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
   Editor_state.filename = 'foo'
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -69,8 +69,8 @@ end
 function test_draw_horizontal_line()
   io.write('\ntest_draw_horizontal_line')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'manhattan'
   edit.draw(Editor_state)
@@ -97,8 +97,8 @@ end
 function test_draw_circle()
   io.write('\ntest_draw_circle')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -126,8 +126,8 @@ function test_cancel_stroke()
   io.write('\ntest_cancel_stroke')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
   Editor_state.filename = 'foo'
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -148,8 +148,8 @@ end
 function test_keys_do_not_affect_shape_when_mouse_up()
   io.write('\ntest_keys_do_not_affect_shape_when_mouse_up')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -164,8 +164,8 @@ end
 function test_draw_circle_mid_stroke()
   io.write('\ntest_draw_circle_mid_stroke')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -192,8 +192,8 @@ end
 function test_draw_arc()
   io.write('\ntest_draw_arc')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'circle'
   edit.draw(Editor_state)
@@ -223,8 +223,8 @@ end
 function test_draw_polygon()
   io.write('\ntest_draw_polygon')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   edit.draw(Editor_state)
   check_eq(Editor_state.current_drawing_mode, 'line', 'F - test_draw_polygon/baseline/drawing_mode')
@@ -249,8 +249,8 @@ end
 function test_draw_rectangle()
   io.write('\ntest_draw_rectangle')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   edit.draw(Editor_state)
   check_eq(Editor_state.current_drawing_mode, 'line', 'F - test_draw_rectangle/baseline/drawing_mode')
@@ -293,8 +293,8 @@ end
 function test_draw_rectangle_intermediate()
   io.write('\ntest_draw_rectangle_intermediate')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   edit.draw(Editor_state)
   check_eq(Editor_state.current_drawing_mode, 'line', 'F - test_draw_rectangle_intermediate/baseline/drawing_mode')
@@ -330,8 +330,8 @@ function test_name_point()
   io.write('\ntest_name_point')
   -- create a drawing with a line
   Editor_state.filename = 'foo'
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -373,8 +373,8 @@ function test_move_point()
   io.write('\ntest_move_point')
   -- create a drawing with a line
   Editor_state.filename = 'foo'
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -430,8 +430,8 @@ function test_move_point_on_manhattan_line()
   io.write('\ntest_move_point_on_manhattan_line')
   -- create a drawing with a manhattan line
   Editor_state.filename = 'foo'
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'manhattan'
   edit.draw(Editor_state)
@@ -456,8 +456,8 @@ function test_delete_lines_at_point()
   io.write('\ntest_delete_lines_at_point')
   -- create a drawing with two lines connected at a point
   Editor_state.filename = 'foo'
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -485,8 +485,8 @@ end
 function test_delete_line_under_mouse_pointer()
   io.write('\ntest_delete_line_under_mouse_pointer')
   -- create a drawing with two lines connected at a point
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -510,8 +510,8 @@ function test_undo_name_point()
   io.write('\ntest_undo_name_point')
   -- create a drawing with a line
   Editor_state.filename = 'foo'
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -558,8 +558,8 @@ function test_undo_move_point()
   io.write('\ntest_undo_move_point')
   -- create a drawing with a line
   Editor_state.filename = 'foo'
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
@@ -608,8 +608,8 @@ function test_undo_delete_point()
   io.write('\ntest_undo_delete_point')
   -- create a drawing with two lines connected at a point
   Editor_state.filename = 'foo'
-  App.screen.init{width=Margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width)  -- zero right margin
+  App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
+  Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)

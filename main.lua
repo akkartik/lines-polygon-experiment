@@ -71,24 +71,19 @@ function App.initialize(arg)
 end
 
 function load_settings()
-  -- maximize window to determine maximum allowable dimensions
-  love.window.setMode(0, 0)  -- maximize
-  App.screen.width, App.screen.height, App.screen.flags = love.window.getMode()
-  --
   local settings = json.decode(love.filesystem.read('config'))
-  love.window.setPosition(settings.x, settings.y, settings.displayindex)
+  love.graphics.setFont(love.graphics.newFont(settings.font_height))
+  -- maximize window to determine maximum allowable dimensions
   App.screen.width, App.screen.height, App.screen.flags = love.window.getMode()
+  -- set up desired window dimensions
+  love.window.setPosition(settings.x, settings.y, settings.displayindex)
   App.screen.flags.resizable = true
   App.screen.flags.minwidth = math.min(App.screen.width, 200)
   App.screen.flags.minheight = math.min(App.screen.width, 200)
   App.screen.width, App.screen.height = settings.width, settings.height
   love.window.setMode(App.screen.width, App.screen.height, App.screen.flags)
-  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width-Margin_right)
+  Editor_state = edit.initialize_state(Margin_top, Margin_left, App.screen.width-Margin_right, settings.font_height, math.floor(settings.font_height*1.3))
   Editor_state.filename = settings.filename
-  Editor_state.font_height = settings.font_height
-  love.graphics.setFont(love.graphics.newFont(Editor_state.font_height))
-  Editor_state.line_height = math.floor(Editor_state.font_height*1.3)
-  Editor_state.em = App.newText(love.graphics.getFont(), 'm')
   Editor_state.screen_top1 = settings.screen_top
   Editor_state.cursor1 = settings.cursor
 end
@@ -126,13 +121,6 @@ function App.resize(w, h)
   Editor_state.width = Editor_state.right-Editor_state.left
   Text.tweak_screen_top_and_cursor(Editor_state, Editor_state.left, Editor_state.right)
   Last_resize_time = App.getTime()
-end
-
-function initialize_font_settings(font_height)
-  Editor_state.font_height = font_height
-  love.graphics.setFont(love.graphics.newFont(Editor_state.font_height))
-  Editor_state.line_height = math.floor(font_height*1.3)
-  Editor_state.em = App.newText(love.graphics.getFont(), 'm')
 end
 
 function App.filedropped(file)
