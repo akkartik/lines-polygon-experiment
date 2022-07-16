@@ -12,11 +12,11 @@ function test_creating_drawing_saves()
   -- click on button to create drawing
   edit.run_after_mouse_click(Editor_state, 8,Editor_state.top+8, 1)
   -- file not immediately saved
-  App.update(0.01)
+  edit.update(Editor_state, 0.01)
   check_nil(App.filesystem['foo'], 'F - test_creating_drawing_saves/early')
   -- wait until save
   App.wait_fake_time(3.1)
-  App.update(0)
+  edit.update(Editor_state, 0)
   -- filesystem contains drawing and an empty line of text
   check_eq(App.filesystem['foo'], '```lines\n```\n\n', 'F - test_creating_drawing_saves')
 end
@@ -50,7 +50,7 @@ function test_draw_line()
   check_eq(p2.y, 36, 'F - test_draw_line/p2:y')
   -- wait until save
   App.wait_fake_time(3.1)
-  App.update(0)
+  edit.update(Editor_state, 0)
   -- The format on disk isn't perfectly stable. Table fields can be reordered.
   -- So just reload from disk to verify.
   Editor_state.lines = load_from_disk(Editor_state.filename)
@@ -362,7 +362,7 @@ function test_name_point()
   check_eq(p2.name, 'A', 'F - test_name_point')
   -- wait until save
   App.wait_fake_time(3.1)
-  App.update(0)
+  edit.update(Editor_state, 0)
   -- change is saved
   Editor_state.lines = load_from_disk(Editor_state.filename)
   local p2 = Editor_state.lines[1].points[drawing.shapes[1].p2]
@@ -392,7 +392,7 @@ function test_move_point()
   check_eq(p2.y, 36, 'F - test_move_point/baseline/p2:y')
   -- wait until save
   App.wait_fake_time(3.1)
-  App.update(0)
+  edit.update(Editor_state, 0)
   -- line is saved to disk
   Editor_state.lines = load_from_disk(Editor_state.filename)
   local drawing = Editor_state.lines[1]
@@ -408,7 +408,7 @@ function test_move_point()
   check_eq(drawing.pending.target_point, p2, 'F - test_move_point/target')
   -- move point
   App.mouse_move(Editor_state.left+26, Editor_state.top+Editor_state.drawing_padding_top+44)
-  App.update(0.05)
+  edit.update(Editor_state, 0.05)
   local p2 = drawing.points[drawing.shapes[1].p2]
   check_eq(p2.x, 26, 'F - test_move_point/x')
   check_eq(p2.y, 44, 'F - test_move_point/y')
@@ -418,7 +418,7 @@ function test_move_point()
   check_eq(drawing.pending, {}, 'F - test_move_point/pending')
   -- wait until save
   App.wait_fake_time(3.1)
-  App.update(0)
+  edit.update(Editor_state, 0)
   -- change is saved
   Editor_state.lines = load_from_disk(Editor_state.filename)
   local p2 = Editor_state.lines[1].points[drawing.shapes[1].p2]
@@ -447,7 +447,7 @@ function test_move_point_on_manhattan_line()
   check_eq(Editor_state.current_drawing_mode, 'move', 'F - test_move_point_on_manhattan_line/mode:1')
   -- move point
   App.mouse_move(Editor_state.left+26, Editor_state.top+Editor_state.drawing_padding_top+44)
-  App.update(0.05)
+  edit.update(Editor_state, 0.05)
   -- line is no longer manhattan
   check_eq(drawing.shapes[1].mode, 'line', 'F - test_move_point_on_manhattan_line/baseline/shape:1')
 end
@@ -476,7 +476,7 @@ function test_delete_lines_at_point()
   check_eq(drawing.shapes[2].mode, 'deleted', 'F - test_delete_lines_at_point/shape:2')
   -- wait for some time
   App.wait_fake_time(3.1)
-  App.update(0)
+  edit.update(Editor_state, 0)
   -- deleted points disappear after file is reloaded
   Editor_state.lines = load_from_disk(Editor_state.filename)
   check_eq(#Editor_state.lines[1].shapes, 0, 'F - test_delete_lines_at_point/save')
@@ -547,7 +547,7 @@ function test_undo_name_point()
   check_eq(p2.name, '', 'F - test_undo_name_point')  -- not quite what it was before, but close enough
   -- wait until save
   App.wait_fake_time(3.1)
-  App.update(0)
+  edit.update(Editor_state, 0)
   -- undo is saved
   Editor_state.lines = load_from_disk(Editor_state.filename)
   local p2 = Editor_state.lines[1].points[drawing.shapes[1].p2]
@@ -579,7 +579,7 @@ function test_undo_move_point()
   -- move p2
   edit.run_after_keychord(Editor_state, 'C-u')
   App.mouse_move(Editor_state.left+26, Editor_state.top+Editor_state.drawing_padding_top+44)
-  App.update(0.05)
+  edit.update(Editor_state, 0.05)
   local p2 = drawing.points[drawing.shapes[1].p2]
   check_eq(p2.x, 26, 'F - test_undo_move_point/x')
   check_eq(p2.y, 44, 'F - test_undo_move_point/y')
@@ -596,7 +596,7 @@ function test_undo_move_point()
   check_eq(p2.y, 36, 'F - test_undo_move_point/y')
   -- wait until save
   App.wait_fake_time(3.1)
-  App.update(0)
+  edit.update(Editor_state, 0)
   -- undo is saved
   Editor_state.lines = load_from_disk(Editor_state.filename)
   local p2 = Editor_state.lines[1].points[drawing.shapes[1].p2]
@@ -635,7 +635,7 @@ function test_undo_delete_point()
   check_eq(drawing.shapes[2].mode, 'line', 'F - test_undo_delete_point/shape:2')
   -- wait until save
   App.wait_fake_time(3.1)
-  App.update(0)
+  edit.update(Editor_state, 0)
   -- undo is saved
   Editor_state.lines = load_from_disk(Editor_state.filename)
   check_eq(#Editor_state.lines[1].shapes, 2, 'F - test_undo_delete_point/save')
