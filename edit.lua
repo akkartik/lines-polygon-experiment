@@ -14,6 +14,10 @@ Margin_top = 15
 Margin_left = 25
 Margin_right = 25
 
+Drawing_padding_top = 10
+Drawing_padding_bottom = 10
+Drawing_padding_height = Drawing_padding_top + Drawing_padding_bottom
+
 Same_point_distance = 4  -- pixel distance at which two points are considered the same
 
 utf8 = require 'utf8'
@@ -99,10 +103,6 @@ function edit.initialize_state(top, left, right, font_height, line_height)  -- c
     right = right,
     width = right-left,
 
-    drawing_padding_top = 10,
-    drawing_padding_bottom = 10,
-    drawing_padding_height = nil,
-
     filename = love.filesystem.getUserDirectory()..'/lines.txt',
     next_save = nil,
 
@@ -115,7 +115,6 @@ function edit.initialize_state(top, left, right, font_height, line_height)  -- c
     search_text = nil,
     search_backup = nil,  -- stuff to restore when cancelling search
   }
-  result.drawing_padding_height = result.drawing_padding_top + result.drawing_padding_bottom
   return result
 end  -- App.initialize_state
 
@@ -145,7 +144,7 @@ function edit.draw(State)
                      end
                      schedule_save(State)
                      record_undo_event(State, {before=Drawing.before, after=snapshot(State, line_index-1, line_index+1)})
-                   end
+                   end,
       })
       if State.search_term == nil then
         if line_index == State.cursor1.line then
@@ -155,10 +154,10 @@ function edit.draw(State)
       State.screen_bottom1.pos = State.screen_top1.pos
       y = y + State.line_height
     elseif line.mode == 'drawing' then
-      y = y+State.drawing_padding_top
+      y = y+Drawing_padding_top
       line.y = y
       Drawing.draw(State, line)
-      y = y + Drawing.pixels(line.h, State.width) + State.drawing_padding_bottom
+      y = y + Drawing.pixels(line.h, State.width) + Drawing_padding_bottom
     else
       line.starty = y
       line.startpos = 1

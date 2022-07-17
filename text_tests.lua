@@ -478,7 +478,7 @@ function test_select_text()
   App.fake_key_press('lshift')
   edit.run_after_keychord(Editor_state, 'S-right')
   App.fake_key_release('lshift')
-  App.keyreleased('lshift')
+  edit.key_released(Editor_state, 'lshift')
   -- selection persists even after shift is released
   check_eq(Editor_state.selection1.line, 1, 'F - test_select_text/selection:line')
   check_eq(Editor_state.selection1.pos, 1, 'F - test_select_text/selection:pos')
@@ -534,9 +534,9 @@ function test_edit_with_shift_key_deletes_selection()
   edit.draw(Editor_state)
   -- mimic precise keypresses for a capital letter
   App.fake_key_press('lshift')
-  App.keypressed('d')
-  App.textinput('D')
-  App.keyreleased('d')
+  edit.keychord_pressed(Editor_state, 'd', 'd')
+  edit.textinput(Editor_state, 'D')
+  edit.key_released(Editor_state, 'd')
   App.fake_key_release('lshift')
   -- selected text is deleted and replaced with the key
   check_nil(Editor_state.selection1.line, 'F - test_edit_with_shift_key_deletes_selection')
@@ -866,7 +866,7 @@ function test_pagedown_skips_drawings()
   Editor_state.cursor1 = {line=1, pos=1}
   Editor_state.screen_top1 = {line=1, pos=1}
   Editor_state.screen_bottom1 = {}
-  local drawing_height = Editor_state.drawing_padding_height + drawing_width/2  -- default
+  local drawing_height = Drawing_padding_height + drawing_width/2  -- default
   -- initially the screen displays the first line and the drawing
   -- 15px margin + 15px line1 + 10px margin + 25px drawing + 10px margin = 75px < screen height 80px
   edit.draw(Editor_state)
