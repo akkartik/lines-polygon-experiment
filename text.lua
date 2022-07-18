@@ -6,23 +6,25 @@ require 'select'
 require 'undo'
 require 'text_tests'
 
--- return values:
---  y coordinate drawn until in px
---  position of start of final screen line drawn
-function Text.draw(State, line, line_index, top)
+-- draw a line starting from startpos to screen at y between State.left and State.right
+-- return the final y, and position of start of final screen line drawn
+function Text.draw(State, line_index, y, startpos)
 --?   print('text.draw', line_index)
   App.color(Text_color)
+  local line = State.lines[line_index]
+  local line_cache = State.text_line_cache[line_index]
+  line_cache.starty = y
+  line_cache.startpos = startpos
   -- wrap long lines
   local x = State.left
-  local y = top
   local pos = 1
   local screen_line_starting_pos = 1
-  if line.fragments == nil then
-    Text.compute_fragments(line, State.left, State.right)
+  if line_cache.fragments == nil then
+    Text.compute_fragments(State, line_index)
   end
-  Text.populate_screen_line_starting_pos(line, State.left, State.right)
+  Text.populate_screen_line_starting_pos(State, line_index)
 --?   print('--')
-  for _, f in ipairs(line.fragments) do
+  for _, f in ipairs(line_cache.fragments) do
     local frag, frag_text = f.data, f.text
     -- render fragment
     local frag_width = App.width(frag_text)
@@ -91,44 +93,46 @@ function Text.draw_cursor(State, x, y)
   State.cursor_y = y+State.line_height
 end
 
-function Text.compute_fragments(line, left, right)
---?   print('compute_fragments', right)
-  line.fragments = {}
-  local x = left
+function Text.compute_fragments(State, line_index)
+--?   print('compute_fragments', State.right)
+  local line = State.lines[line_index]
+  local line_cache = State.text_line_cache[line_index]
+  line_cache.fragments = {}
+  local x = State.left
   -- try to wrap at word boundaries
   for frag in line.data:gmatch('%S*%s*') do
     local frag_text = App.newText(love.graphics.getFont(), frag)
     local frag_width = App.width(frag_text)
---?     print('x: '..tostring(x)..'; '..tostring(right-x)..'px to go')
+--?     print('x: '..tostring(x)..'; '..tostring(State.right-x)..'px to go')
 --?     print('frag: ^'..frag..'$ is '..tostring(frag_width)..'px wide')
-    if x + frag_width > right then
-      while x + frag_width > right do
---?         print(x, frag, frag_width, right)
-        if x < 0.8*right then
---?           print(frag, x, frag_width, right)
+    if x + frag_width > State.right then
+      while x + frag_width > State.right do
+--?         print(x, frag, frag_width, State.right)
+        if x < 0.8*State.right then
+--?           print(frag, x, frag_width, State.right)
           -- long word; chop it at some letter
           -- We're not going to reimplement TeX here.
-          local bpos = Text.nearest_pos_less_than(frag, right - x)
+          local bpos = Text.nearest_pos_less_than(frag, State.right - x)
           assert(bpos > 0)  -- avoid infinite loop when window is too narrow
           local boffset = Text.offset(frag, bpos+1)  -- byte _after_ bpos
 --?           print('space for '..tostring(bpos)..' graphemes, '..tostring(boffset)..' bytes')
           local frag1 = string.sub(frag, 1, boffset-1)
           local frag1_text = App.newText(love.graphics.getFont(), frag1)
           local frag1_width = App.width(frag1_text)
---?           print(frag, x, frag1_width, right)
-          assert(x + frag1_width <= right)
+--?           print(frag, x, frag1_width, State.right)
+          assert(x + frag1_width <= State.right)
 --?           print('inserting '..frag1..' of width '..tostring(frag1_width)..'px')
-          table.insert(line.fragments, {data=frag1, text=frag1_text})
+          table.insert(line_cache.fragments, {data=frag1, text=frag1_text})
           frag = string.sub(frag, boffset)
           frag_text = App.newText(love.graphics.getFont(), frag)
           frag_width = App.width(frag_text)
         end
-        x = left  -- new line
+        x = State.left  -- new line
       end
     end
     if #frag > 0 then
 --?       print('inserting '..frag..' of width '..tostring(frag_width)..'px')
-      table.insert(line.fragments, {data=frag, text=frag_text})
+      table.insert(line_cache.fragments, {data=frag, text=frag_text})
     end
     x = x + frag_width
   end
@@ -141,7 +145,7 @@ function Text.textinput(State, t)
 --?   print(State.screen_top1.line, State.screen_top1.pos, State.cursor1.line, State.cursor1.pos, State.screen_bottom1.line, State.screen_bottom1.pos)
   Text.insert_at_cursor(State, t)
   if State.cursor_y >= App.screen.height - State.line_height then
-    Text.populate_screen_line_starting_pos(State.lines[State.cursor1.line], State.left, State.right)
+    Text.populate_screen_line_starting_pos(State, State.cursor1.line)
     Text.snap_cursor_to_bottom_of_screen(State, State.left, State.right)
 --?     print('=>', State.screen_top1.line, State.screen_top1.pos, State.cursor1.line, State.cursor1.pos, State.screen_bottom1.line, State.screen_bottom1.pos)
   end
@@ -151,7 +155,7 @@ end
 function Text.insert_at_cursor(State, t)
   local byte_offset = Text.offset(State.lines[State.cursor1.line].data, State.cursor1.pos)
   State.lines[State.cursor1.line].data = string.sub(State.lines[State.cursor1.line].data, 1, byte_offset-1)..t..string.sub(State.lines[State.cursor1.line].data, byte_offset)
-  Text.clear_cache(State.lines[State.cursor1.line])
+  Text.clear_screen_line_cache(State, State.cursor1.line)
   State.cursor1.pos = State.cursor1.pos+1
 end
 
@@ -174,7 +178,7 @@ function Text.keychord_pressed(State, chord)
 --?     print(State.screen_top1.line, State.screen_top1.pos, State.cursor1.line, State.cursor1.pos, State.screen_bottom1.line, State.screen_bottom1.pos)
     Text.insert_at_cursor(State, '\t')
     if State.cursor_y >= App.screen.height - State.line_height then
-      Text.populate_screen_line_starting_pos(State.lines[State.cursor1.line], State.left, State.right)
+      Text.populate_screen_line_starting_pos(State, State.cursor1.line)
       Text.snap_cursor_to_bottom_of_screen(State, State.left, State.right)
 --?       print('=>', State.screen_top1.line, State.screen_top1.pos, State.cursor1.line, State.cursor1.pos, State.screen_bottom1.line, State.screen_bottom1.pos)
     end
@@ -203,11 +207,13 @@ function Text.keychord_pressed(State, chord)
       before = snapshot(State, State.cursor1.line-1, State.cursor1.line)
       if State.lines[State.cursor1.line-1].mode == 'drawing' then
         table.remove(State.lines, State.cursor1.line-1)
+        table.remove(State.text_line_cache, State.cursor1.line-1)
       else
         -- join lines
         State.cursor1.pos = utf8.len(State.lines[State.cursor1.line-1].data)+1
         State.lines[State.cursor1.line-1].data = State.lines[State.cursor1.line-1].data..State.lines[State.cursor1.line].data
         table.remove(State.lines, State.cursor1.line)
+        table.remove(State.text_line_cache, State.cursor1.line)
       end
       State.cursor1.line = State.cursor1.line-1
     end
@@ -217,7 +223,7 @@ function Text.keychord_pressed(State, chord)
       State.screen_top1 = Text.to1(State, top2)
       Text.redraw_all(State)  -- if we're scrolling, reclaim all fragments to avoid memory leaks
     end
-    Text.clear_cache(State.lines[State.cursor1.line])
+    Text.clear_screen_line_cache(State, State.cursor1.line)
     assert(Text.le1(State.screen_top1, State.cursor1))
     schedule_save(State)
     record_undo_event(State, {before=before, after=snapshot(State, State.cursor1.line)})
@@ -245,15 +251,14 @@ function Text.keychord_pressed(State, chord)
         -- no change to State.cursor1.pos
       end
     elseif State.cursor1.line < #State.lines then
-      if State.lines[State.cursor1.line+1].mode == 'drawing' then
-        table.remove(State.lines, State.cursor1.line+1)
-      else
+      if State.lines[State.cursor1.line+1].mode == 'text' then
         -- join lines
         State.lines[State.cursor1.line].data = State.lines[State.cursor1.line].data..State.lines[State.cursor1.line+1].data
-        table.remove(State.lines, State.cursor1.line+1)
       end
+      table.remove(State.lines, State.cursor1.line+1)
+      table.remove(State.text_line_cache, State.cursor1.line+1)
     end
-    Text.clear_cache(State.lines[State.cursor1.line])
+    Text.clear_screen_line_cache(State, State.cursor1.line)
     schedule_save(State)
     record_undo_event(State, {before=before, after=snapshot(State, State.cursor1.line)})
   --== shortcuts that move the cursor
@@ -344,9 +349,9 @@ end
 function Text.insert_return(State)
   local byte_offset = Text.offset(State.lines[State.cursor1.line].data, State.cursor1.pos)
   table.insert(State.lines, State.cursor1.line+1, {mode='text', data=string.sub(State.lines[State.cursor1.line].data, byte_offset)})
+  table.insert(State.text_line_cache, State.cursor1.line+1, {})
   State.lines[State.cursor1.line].data = string.sub(State.lines[State.cursor1.line].data, 1, byte_offset-1)
-  Text.clear_cache(State.lines[State.cursor1.line])
-  Text.clear_cache(State.lines[State.cursor1.line+1])
+  Text.clear_screen_line_cache(State, State.cursor1.line)
   State.cursor1.line = State.cursor1.line+1
   State.cursor1.pos = 1
 end
@@ -413,10 +418,10 @@ function Text.up(State)
       if State.lines[new_cursor_line].mode == 'text' then
 --?         print('found previous text line')
         State.cursor1.line = new_cursor_line
-        Text.populate_screen_line_starting_pos(State.lines[State.cursor1.line], State.left, State.right)
+        Text.populate_screen_line_starting_pos(State, State.cursor1.line)
         -- previous text line found, pick its final screen line
 --?         print('has multiple screen lines')
-        local screen_line_starting_pos = State.lines[State.cursor1.line].screen_line_starting_pos
+        local screen_line_starting_pos = State.text_line_cache[State.cursor1.line].screen_line_starting_pos
 --?         print(#screen_line_starting_pos)
         screen_line_starting_pos = screen_line_starting_pos[#screen_line_starting_pos]
 --?         print('previous screen line starts at pos '..tostring(screen_line_starting_pos)..' of its line')
@@ -438,7 +443,7 @@ function Text.up(State)
     -- move up one screen line in current line
 --?     print('cursor is NOT at first screen line of its line')
     assert(screen_line_index > 1)
-    new_screen_line_starting_pos = State.lines[State.cursor1.line].screen_line_starting_pos[screen_line_index-1]
+    new_screen_line_starting_pos = State.text_line_cache[State.cursor1.line].screen_line_starting_pos[screen_line_index-1]
 --?     print('switching pos of screen line at cursor from '..tostring(screen_line_starting_pos)..' to '..tostring(new_screen_line_starting_pos))
     if State.screen_top1.line == State.cursor1.line and State.screen_top1.pos == screen_line_starting_pos then
       State.screen_top1.pos = new_screen_line_starting_pos
@@ -481,7 +486,7 @@ function Text.down(State)
     end
 --?     print('cursor is NOT at final screen line of its line')
     local screen_line_index, screen_line_starting_pos = Text.pos_at_start_of_cursor_screen_line(State)
-    new_screen_line_starting_pos = State.lines[State.cursor1.line].screen_line_starting_pos[screen_line_index+1]
+    new_screen_line_starting_pos = State.text_line_cache[State.cursor1.line].screen_line_starting_pos[screen_line_index+1]
 --?     print('switching pos of screen line at cursor from '..tostring(screen_line_starting_pos)..' to '..tostring(new_screen_line_starting_pos))
     local new_screen_line_starting_byte_offset = Text.offset(State.lines[State.cursor1.line].data, new_screen_line_starting_pos)
     local s = string.sub(State.lines[State.cursor1.line].data, new_screen_line_starting_byte_offset)
@@ -617,9 +622,9 @@ function Text.right_without_scroll(State)
 end
 
 function Text.pos_at_start_of_cursor_screen_line(State)
-  Text.populate_screen_line_starting_pos(State.lines[State.cursor1.line], State.left, State.right)
-  for i=#State.lines[State.cursor1.line].screen_line_starting_pos,1,-1 do
-    local spos = State.lines[State.cursor1.line].screen_line_starting_pos[i]
+  Text.populate_screen_line_starting_pos(State, State.cursor1.line)
+  for i=#State.text_line_cache[State.cursor1.line].screen_line_starting_pos,1,-1 do
+    local spos = State.text_line_cache[State.cursor1.line].screen_line_starting_pos[i]
     if spos <= State.cursor1.pos then
       return i,spos
     end
@@ -628,8 +633,8 @@ function Text.pos_at_start_of_cursor_screen_line(State)
 end
 
 function Text.cursor_at_final_screen_line(State)
-  Text.populate_screen_line_starting_pos(State.lines[State.cursor1.line], State.left, State.right)
-  local screen_lines = State.lines[State.cursor1.line].screen_line_starting_pos
+  Text.populate_screen_line_starting_pos(State, State.cursor1.line)
+  local screen_lines = State.text_line_cache[State.cursor1.line].screen_line_starting_pos
 --?   print(screen_lines[#screen_lines], State.cursor1.pos)
   return screen_lines[#screen_lines] <= State.cursor1.pos
 end
@@ -648,6 +653,7 @@ function Text.move_cursor_down_to_next_text_line_while_scrolling_again_if_necess
   if State.cursor1.line > #State.lines then
     assert(State.cursor1.line == #State.lines+1)
     table.insert(State.lines, {mode='text', data=''})
+    table.insert(State.text_line_cache, {})
   end
 --?   print(y, App.screen.height, App.screen.height-State.line_height)
   if y > App.screen.height - State.line_height then
@@ -692,25 +698,29 @@ function Text.snap_cursor_to_bottom_of_screen(State)
   Text.redraw_all(State)  -- if we're scrolling, reclaim all fragments to avoid memory leaks
 end
 
-function Text.in_line(State, line, x,y)
-  if line.starty == nil then return false end  -- outside current page
+function Text.in_line(State, line_index, x,y)
+  local line = State.lines[line_index]
+  local line_cache = State.text_line_cache[line_index]
+  if line_cache.starty == nil then return false end  -- outside current page
   if x < State.left then return false end
-  if y < line.starty then return false end
-  Text.populate_screen_line_starting_pos(line, State.left, State.right)
-  return y < line.starty + State.line_height*(#line.screen_line_starting_pos - Text.screen_line_index(line, line.startpos) + 1)
+  if y < line_cache.starty then return false end
+  Text.populate_screen_line_starting_pos(State, line_index)
+  return y < line_cache.starty + State.line_height*(#line_cache.screen_line_starting_pos - Text.screen_line_index(line_cache.screen_line_starting_pos, line_cache.startpos) + 1)
 end
 
 -- convert mx,my in pixels to schema-1 coordinates
-function Text.to_pos_on_line(State, line, mx, my)
-  if line.fragments == nil then
-    Text.compute_fragments(line, State.left, State.right)
+function Text.to_pos_on_line(State, line_index, mx, my)
+  local line = State.lines[line_index]
+  local line_cache = State.text_line_cache[line_index]
+  if line_cache.fragments == nil then
+    Text.compute_fragments(State, line_index)
   end
-  assert(my >= line.starty)
+  assert(my >= line_cache.starty)
   -- duplicate some logic from Text.draw
-  local y = line.starty
-  local start_screen_line_index = Text.screen_line_index(line, line.startpos)
-  for screen_line_index = start_screen_line_index,#line.screen_line_starting_pos do
-    local screen_line_starting_pos = line.screen_line_starting_pos[screen_line_index]
+  local y = line_cache.starty
+  local start_screen_line_index = Text.screen_line_index(line_cache.screen_line_starting_pos, line_cache.startpos)
+  for screen_line_index = start_screen_line_index,#line_cache.screen_line_starting_pos do
+    local screen_line_starting_pos = line_cache.screen_line_starting_pos[screen_line_index]
     local screen_line_starting_byte_offset = Text.offset(line.data, screen_line_starting_pos)
 --?     print('iter', y, screen_line_index, screen_line_starting_pos, string.sub(line.data, screen_line_starting_byte_offset))
     local nexty = y + State.line_height
@@ -718,9 +728,9 @@ function Text.to_pos_on_line(State, line, mx, my)
       -- On all wrapped screen lines but the final one, clicks past end of
       -- line position cursor on final character of screen line.
       -- (The final screen line positions past end of screen line as always.)
-      if screen_line_index < #line.screen_line_starting_pos and mx > Text.screen_line_width(line, screen_line_index) then
+      if screen_line_index < #line_cache.screen_line_starting_pos and mx > Text.screen_line_width(State, line_index, screen_line_index) then
 --?         print('past end of non-final line; return')
-        return line.screen_line_starting_pos[screen_line_index+1]-1
+        return line_cache.screen_line_starting_pos[screen_line_index+1]-1
       end
       local s = string.sub(line.data, screen_line_starting_byte_offset)
 --?       print('return', mx, Text.nearest_cursor_pos(s, mx, State.left), '=>', screen_line_starting_pos + Text.nearest_cursor_pos(s, mx, State.left) - 1)
@@ -731,12 +741,14 @@ function Text.to_pos_on_line(State, line, mx, my)
   assert(false)
 end
 
-function Text.screen_line_width(line, i)
-  local start_pos = line.screen_line_starting_pos[i]
+function Text.screen_line_width(State, line_index, i)
+  local line = State.lines[line_index]
+  local line_cache = State.text_line_cache[line_index]
+  local start_pos = line_cache.screen_line_starting_pos[i]
   local start_offset = Text.offset(line.data, start_pos)
   local screen_line
-  if i < #line.screen_line_starting_pos then
-    local past_end_pos = line.screen_line_starting_pos[i+1]
+  if i < #line_cache.screen_line_starting_pos then
+    local past_end_pos = line_cache.screen_line_starting_pos[i+1]
     local past_end_offset = Text.offset(line.data, past_end_pos)
     screen_line = string.sub(line.data, start_offset, past_end_offset-1)
   else
@@ -746,9 +758,9 @@ function Text.screen_line_width(line, i)
   return App.width(screen_line_text)
 end
 
-function Text.screen_line_index(line, pos)
-  for i = #line.screen_line_starting_pos,1,-1 do
-    if line.screen_line_starting_pos[i] <= pos then
+function Text.screen_line_index(screen_line_starting_pos, pos)
+  for i = #screen_line_starting_pos,1,-1 do
+    if screen_line_starting_pos[i] <= pos then
       return i
     end
   end
@@ -838,9 +850,9 @@ function Text.to2(State, pos1)
     return {line=pos1.line, screen_line=1, screen_pos=1}
   end
   local result = {line=pos1.line, screen_line=1}
-  Text.populate_screen_line_starting_pos(State.lines[pos1.line], State.left, State.right)
-  for i=#State.lines[pos1.line].screen_line_starting_pos,1,-1 do
-    local spos = State.lines[pos1.line].screen_line_starting_pos[i]
+  Text.populate_screen_line_starting_pos(State, pos1.line)
+  for i=#State.text_line_cache[pos1.line].screen_line_starting_pos,1,-1 do
+    local spos = State.text_line_cache[pos1.line].screen_line_starting_pos[i]
     if spos <= pos1.pos then
       result.screen_line = i
       result.screen_pos = pos1.pos - spos + 1
@@ -854,7 +866,7 @@ end
 function Text.to1(State, pos2)
   local result = {line=pos2.line, pos=pos2.screen_pos}
   if pos2.screen_line > 1 then
-    result.pos = State.lines[pos2.line].screen_line_starting_pos[pos2.screen_line] + pos2.screen_pos - 1
+    result.pos = State.text_line_cache[pos2.line].screen_line_starting_pos[pos2.screen_line] + pos2.screen_pos - 1
   end
   return result
 end
@@ -902,29 +914,31 @@ function Text.previous_screen_line(State, pos2)
     return {line=pos2.line-1, screen_line=1, screen_pos=1}
   else
     local l = State.lines[pos2.line-1]
-    Text.populate_screen_line_starting_pos(State.lines[pos2.line-1], State.left, State.right)
-    return {line=pos2.line-1, screen_line=#State.lines[pos2.line-1].screen_line_starting_pos, screen_pos=1}
+    Text.populate_screen_line_starting_pos(State, pos2.line-1)
+    return {line=pos2.line-1, screen_line=#State.text_line_cache[pos2.line-1].screen_line_starting_pos, screen_pos=1}
   end
 end
 
-function Text.populate_screen_line_starting_pos(line, left, right)
-  if line.screen_line_starting_pos then
+function Text.populate_screen_line_starting_pos(State, line_index)
+  local line = State.lines[line_index]
+  local line_cache = State.text_line_cache[line_index]
+  if line_cache.screen_line_starting_pos then
     return
   end
   -- duplicate some logic from Text.draw
-  if line.fragments == nil then
-    Text.compute_fragments(line, left, right)
+  if line_cache.fragments == nil then
+    Text.compute_fragments(State, line_index)
   end
-  line.screen_line_starting_pos = {1}
-  local x = left
+  line_cache.screen_line_starting_pos = {1}
+  local x = State.left
   local pos = 1
-  for _, f in ipairs(line.fragments) do
+  for _, f in ipairs(line_cache.fragments) do
     local frag, frag_text = f.data, f.text
     -- render fragment
     local frag_width = App.width(frag_text)
-    if x + frag_width > right then
-      x = left
-      table.insert(line.screen_line_starting_pos, pos)
+    if x + frag_width > State.right then
+      x = State.left
+      table.insert(line_cache.screen_line_starting_pos, pos)
     end
     x = x + frag_width
     local frag_len = utf8.len(frag)
@@ -936,16 +950,17 @@ end
 function Text.tweak_screen_top_and_cursor(State)
 --?   print('a', State.selection1.line)
   if State.screen_top1.pos == 1 then return end
+  Text.populate_screen_line_starting_pos(State, State.screen_top1.line)
   local line = State.lines[State.screen_top1.line]
-  Text.populate_screen_line_starting_pos(line, State.left, State.right)
-  for i=2,#line.screen_line_starting_pos do
-    local pos = line.screen_line_starting_pos[i]
+  local line_cache = State.text_line_cache[State.screen_top1.line]
+  for i=2,#line_cache.screen_line_starting_pos do
+    local pos = line_cache.screen_line_starting_pos[i]
     if pos == State.screen_top1.pos then
       break
     end
     if pos > State.screen_top1.pos then
       -- make sure screen top is at start of a screen line
-      local prev = line.screen_line_starting_pos[i-1]
+      local prev = line_cache.screen_line_starting_pos[i-1]
       if State.screen_top1.pos - prev < pos - State.screen_top1.pos then
         State.screen_top1.pos = prev
       else
@@ -961,10 +976,9 @@ function Text.tweak_screen_top_and_cursor(State)
 --?     print('too low')
     if Text.cursor_past_screen_bottom(State) then
 --?       print('tweak')
-      local line = State.lines[State.screen_bottom1.line]
       State.cursor1 = {
           line=State.screen_bottom1.line,
-          pos=Text.to_pos_on_line(State, line, App.screen.width-5, App.screen.height-5),
+          pos=Text.to_pos_on_line(State, State.screen_bottom1.line, App.screen.width-5, App.screen.height-5),
       }
     end
   end
@@ -983,14 +997,13 @@ end
 
 function Text.redraw_all(State)
 --?   print('clearing fragments')
-  for _,line in ipairs(State.lines) do
-    line.starty = nil
-    line.startpos = nil
-    Text.clear_cache(line)
+  State.text_line_cache = {}
+  for i=1,#State.lines do
+    State.text_line_cache[i] = {}
   end
 end
 
-function Text.clear_cache(line)
-  line.fragments = nil
-  line.screen_line_starting_pos = nil
+function Text.clear_screen_line_cache(State, line_index)
+  State.text_line_cache[line_index].fragments = nil
+  State.text_line_cache[line_index].screen_line_starting_pos = nil
 end

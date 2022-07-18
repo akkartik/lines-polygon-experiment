@@ -8,6 +8,7 @@ function test_creating_drawing_saves()
   Editor_state = edit.initialize_test_state()
   Editor_state.filename = 'foo'
   Editor_state.lines = load_array{}
+  Text.redraw_all(Editor_state)
   edit.draw(Editor_state)
   -- click on button to create drawing
   edit.run_after_mouse_click(Editor_state, 8,Editor_state.top+8, 1)
@@ -28,6 +29,7 @@ function test_draw_line()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   check_eq(#Editor_state.lines, 2, 'F - test_draw_line/baseline/#lines')
@@ -54,6 +56,7 @@ function test_draw_line()
   -- The format on disk isn't perfectly stable. Table fields can be reordered.
   -- So just reload from disk to verify.
   Editor_state.lines = load_from_disk(Editor_state.filename)
+  Text.redraw_all(Editor_state)
   local drawing = Editor_state.lines[1]
   check_eq(#drawing.shapes, 1, 'F - test_draw_line/save/#shapes')
   check_eq(#drawing.points, 2, 'F - test_draw_line/save/#points')
@@ -72,6 +75,7 @@ function test_draw_horizontal_line()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'manhattan'
   edit.draw(Editor_state)
   check_eq(#Editor_state.lines, 2, 'F - test_draw_horizontal_line/baseline/#lines')
@@ -100,6 +104,7 @@ function test_draw_circle()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   check_eq(#Editor_state.lines, 2, 'F - test_draw_circle/baseline/#lines')
@@ -129,6 +134,7 @@ function test_cancel_stroke()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   check_eq(#Editor_state.lines, 2, 'F - test_cancel_stroke/baseline/#lines')
@@ -151,6 +157,7 @@ function test_keys_do_not_affect_shape_when_mouse_up()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   -- hover over drawing and press 'o' without holding mouse
@@ -167,6 +174,7 @@ function test_draw_circle_mid_stroke()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   check_eq(#Editor_state.lines, 2, 'F - test_draw_circle_mid_stroke/baseline/#lines')
@@ -195,6 +203,7 @@ function test_draw_arc()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'circle'
   edit.draw(Editor_state)
   check_eq(#Editor_state.lines, 2, 'F - test_draw_arc/baseline/#lines')
@@ -226,6 +235,7 @@ function test_draw_polygon()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   edit.draw(Editor_state)
   check_eq(Editor_state.current_drawing_mode, 'line', 'F - test_draw_polygon/baseline/drawing_mode')
   check_eq(#Editor_state.lines, 2, 'F - test_draw_polygon/baseline/#lines')
@@ -252,6 +262,7 @@ function test_draw_rectangle()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   edit.draw(Editor_state)
   check_eq(Editor_state.current_drawing_mode, 'line', 'F - test_draw_rectangle/baseline/drawing_mode')
   check_eq(#Editor_state.lines, 2, 'F - test_draw_rectangle/baseline/#lines')
@@ -296,6 +307,7 @@ function test_draw_rectangle_intermediate()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   edit.draw(Editor_state)
   check_eq(Editor_state.current_drawing_mode, 'line', 'F - test_draw_rectangle_intermediate/baseline/drawing_mode')
   check_eq(#Editor_state.lines, 2, 'F - test_draw_rectangle_intermediate/baseline/#lines')
@@ -333,6 +345,7 @@ function test_name_point()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   -- draw a line
@@ -365,6 +378,7 @@ function test_name_point()
   edit.update(Editor_state, 0)
   -- change is saved
   Editor_state.lines = load_from_disk(Editor_state.filename)
+  Text.redraw_all(Editor_state)
   local p2 = Editor_state.lines[1].points[drawing.shapes[1].p2]
   check_eq(p2.name, 'A', 'F - test_name_point/save')
 end
@@ -376,6 +390,7 @@ function test_move_point()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   edit.run_after_mouse_press(Editor_state, Editor_state.left+5, Editor_state.top+Drawing_padding_top+6, 1)
@@ -395,6 +410,7 @@ function test_move_point()
   edit.update(Editor_state, 0)
   -- line is saved to disk
   Editor_state.lines = load_from_disk(Editor_state.filename)
+  Text.redraw_all(Editor_state)
   local drawing = Editor_state.lines[1]
   local p2 = Editor_state.lines[1].points[drawing.shapes[1].p2]
   check_eq(p2.x, 35, 'F - test_move_point/save/x')
@@ -421,6 +437,7 @@ function test_move_point()
   edit.update(Editor_state, 0)
   -- change is saved
   Editor_state.lines = load_from_disk(Editor_state.filename)
+  Text.redraw_all(Editor_state)
   local p2 = Editor_state.lines[1].points[drawing.shapes[1].p2]
   check_eq(p2.x, 26, 'F - test_move_point/save/x')
   check_eq(p2.y, 44, 'F - test_move_point/save/y')
@@ -433,6 +450,7 @@ function test_move_point_on_manhattan_line()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'manhattan'
   edit.draw(Editor_state)
   edit.run_after_mouse_press(Editor_state, Editor_state.left+5, Editor_state.top+Drawing_padding_top+6, 1)
@@ -459,6 +477,7 @@ function test_delete_lines_at_point()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   edit.run_after_mouse_press(Editor_state, Editor_state.left+5, Editor_state.top+Drawing_padding_top+6, 1)
@@ -479,6 +498,7 @@ function test_delete_lines_at_point()
   edit.update(Editor_state, 0)
   -- deleted points disappear after file is reloaded
   Editor_state.lines = load_from_disk(Editor_state.filename)
+  Text.redraw_all(Editor_state)
   check_eq(#Editor_state.lines[1].shapes, 0, 'F - test_delete_lines_at_point/save')
 end
 
@@ -488,6 +508,7 @@ function test_delete_line_under_mouse_pointer()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   edit.run_after_mouse_press(Editor_state, Editor_state.left+5, Editor_state.top+Drawing_padding_top+6, 1)
@@ -513,6 +534,7 @@ function test_undo_name_point()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   -- draw a line
@@ -550,6 +572,7 @@ function test_undo_name_point()
   edit.update(Editor_state, 0)
   -- undo is saved
   Editor_state.lines = load_from_disk(Editor_state.filename)
+  Text.redraw_all(Editor_state)
   local p2 = Editor_state.lines[1].points[drawing.shapes[1].p2]
   check_eq(p2.name, '', 'F - test_undo_name_point/save')
 end
@@ -561,6 +584,7 @@ function test_undo_move_point()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   edit.run_after_mouse_press(Editor_state, Editor_state.left+5, Editor_state.top+Drawing_padding_top+6, 1)
@@ -599,6 +623,7 @@ function test_undo_move_point()
   edit.update(Editor_state, 0)
   -- undo is saved
   Editor_state.lines = load_from_disk(Editor_state.filename)
+  Text.redraw_all(Editor_state)
   local p2 = Editor_state.lines[1].points[drawing.shapes[1].p2]
   check_eq(p2.x, 35, 'F - test_undo_move_point/save/x')
   check_eq(p2.y, 36, 'F - test_undo_move_point/save/y')
@@ -611,6 +636,7 @@ function test_undo_delete_point()
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
   Editor_state.lines = load_array{'```lines', '```', ''}
+  Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
   edit.draw(Editor_state)
   edit.run_after_mouse_press(Editor_state, Editor_state.left+5, Editor_state.top+Drawing_padding_top+6, 1)
@@ -638,5 +664,6 @@ function test_undo_delete_point()
   edit.update(Editor_state, 0)
   -- undo is saved
   Editor_state.lines = load_from_disk(Editor_state.filename)
+  Text.redraw_all(Editor_state)
   check_eq(#Editor_state.lines[1].shapes, 2, 'F - test_undo_delete_point/save')
 end

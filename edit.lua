@@ -38,11 +38,6 @@ function edit.initialize_state(top, left, right, font_height, line_height)  -- c
     -- a text is a table with:
     --    mode = 'text',
     --    string data,
-    --    startpos, the index of data the line starts rendering from (if currently on screen), can only be >1 for topmost line on screen
-    --    starty, the y coord in pixels
-    --    some cached data that's blown away and recomputed when data changes:
-    --      fragments: snippets of rendered love.graphics.Text, guaranteed to not wrap
-    --      screen_line_starting_pos: optional array of grapheme indices if it wraps over more than one screen line
     -- a drawing is a table with:
     --    mode = 'drawing'
     --    a (y) coord in pixels (updated while painting screen),
@@ -60,12 +55,19 @@ function edit.initialize_state(top, left, right, font_height, line_height)  -- c
     -- Unless otherwise specified, coord fields are normalized; a drawing is always 256 units wide
     -- The field names are carefully chosen so that switching modes in midstream
     -- remembers previously entered points where that makes sense.
-    lines = {{mode='text', data=''}},
+    lines = {{mode='text', data=''}},  -- array of lines
 
     -- Lines can be too long to fit on screen, in which case they _wrap_ into
     -- multiple _screen lines_.
-    --
-    -- Therefore, any potential location for the cursor can be described in two ways:
+
+    -- rendering wrapped text lines needs some additional short-lived data per line:
+    --   startpos, the index of data the line starts rendering from, can only be >1 for topmost line on screen
+    --   starty, the y coord in pixels the line starts rendering from
+    --   fragments: snippets of rendered love.graphics.Text, guaranteed to not straddle screen lines
+    --   screen_line_starting_pos: optional array of grapheme indices if it wraps over more than one screen line
+    text_line_cache = {},
+
+    -- Given wrapping, any potential location for the text cursor can be described in two ways:
     -- * schema 1: As a combination of line index and position within a line (in utf8 codepoint units)
     -- * schema 2: As a combination of line index, screen line index within the line, and a position within the screen line.
     --
@@ -121,6 +123,7 @@ end  -- App.initialize_state
 function edit.draw(State)
   App.color(Text_color)
 --?   print(State.screen_top1.line, State.screen_top1.pos, State.cursor1.line, State.cursor1.pos)
+  assert(#State.lines == #State.text_line_cache)
   assert(Text.le1(State.screen_top1, State.cursor1))
   State.cursor_y = -1
   local y = State.top
@@ -130,44 +133,39 @@ function edit.draw(State)
 --?     print('draw:', y, line_index, line)
     if y + State.line_height > App.screen.height then break end
     State.screen_bottom1.line = line_index
-    if line.mode == 'text' and line.data == '' then
-      line.starty = y
-      line.startpos = 1
-      -- insert new drawing
-      button('draw', {x=4,y=y+4, w=12,h=12, color={1,1,0},
-        icon = icon.insert_drawing,
-        onpress1 = function()
-                     Drawing.before = snapshot(State, line_index-1, line_index)
-                     table.insert(State.lines, line_index, {mode='drawing', y=y, h=256/2, points={}, shapes={}, pending={}})
-                     if State.cursor1.line >= line_index then
-                       State.cursor1.line = State.cursor1.line+1
-                     end
-                     schedule_save(State)
-                     record_undo_event(State, {before=Drawing.before, after=snapshot(State, line_index-1, line_index+1)})
-                   end,
-      })
-      if State.search_term == nil then
-        if line_index == State.cursor1.line then
-          Text.draw_cursor(State, State.left, y)
-        end
+    if line.mode == 'text' then
+--?       print('text.draw', y, line_index)
+      local startpos = 1
+      if line_index == State.screen_top1.line then
+        startpos = State.screen_top1.pos
       end
-      State.screen_bottom1.pos = State.screen_top1.pos
+      if line.data == '' then
+        -- button to insert new drawing
+        button('draw', {x=4,y=y+4, w=12,h=12, color={1,1,0},
+          icon = icon.insert_drawing,
+          onpress1 = function()
+                       Drawing.before = snapshot(State, line_index-1, line_index)
+                       table.insert(State.lines, line_index, {mode='drawing', y=y, h=256/2, points={}, shapes={}, pending={}})
+                       table.insert(State.text_line_cache, line_index, {})
+                       if State.cursor1.line >= line_index then
+                         State.cursor1.line = State.cursor1.line+1
+                       end
+                       schedule_save(State)
+                       record_undo_event(State, {before=Drawing.before, after=snapshot(State, line_index-1, line_index+1)})
+                     end,
+        })
+      end
+      y, State.screen_bottom1.pos = Text.draw(State, line_index, y, startpos)
       y = y + State.line_height
+--?       print('=> y', y)
     elseif line.mode == 'drawing' then
       y = y+Drawing_padding_top
       line.y = y
       Drawing.draw(State, line)
       y = y + Drawing.pixels(line.h, State.width) + Drawing_padding_bottom
     else
-      line.starty = y
-      line.startpos = 1
-      if line_index == State.screen_top1.line then
-        line.startpos = State.screen_top1.pos
-      end
---?       print('text.draw', y, line_index)
-      y, State.screen_bottom1.pos = Text.draw(State, line, line_index, line.starty)
-      y = y + State.line_height
---?       print('=> y', y)
+      print(line.mode)
+      assert(false)
     end
   end
   if State.cursor_y == -1 then
@@ -207,7 +205,7 @@ function edit.mouse_pressed(State, x,y, mouse_button)
 
   for line_index,line in ipairs(State.lines) do
     if line.mode == 'text' then
-      if Text.in_line(State, line, x,y, State.left, State.right) then
+      if Text.in_line(State, line_index, x,y) then
         -- delicate dance between cursor, selection and old cursor/selection
         -- scenarios:
         --  regular press+release: sets cursor, clears selection
@@ -222,7 +220,7 @@ function edit.mouse_pressed(State, x,y, mouse_button)
         State.mousepress_shift = App.shift_down()
         State.selection1 = {
             line=line_index,
-            pos=Text.to_pos_on_line(State, line, x, y, State.left, State.right),
+            pos=Text.to_pos_on_line(State, line_index, x, y),
         }
 --?         print('selection', State.selection1.line, State.selection1.pos)
         break
@@ -252,11 +250,11 @@ function edit.mouse_released(State, x,y, mouse_button)
   else
     for line_index,line in ipairs(State.lines) do
       if line.mode == 'text' then
-        if Text.in_line(State, line, x,y, State.left, State.right) then
+        if Text.in_line(State, line_index, x,y) then
 --?           print('reset selection')
           State.cursor1 = {
               line=line_index,
-              pos=Text.to_pos_on_line(State, line, x, y, State.left, State.right),
+              pos=Text.to_pos_on_line(State, line_index, x, y),
           }
 --?           print('cursor', State.cursor1.line, State.cursor1.pos)
           if State.mousepress_shift then
@@ -351,6 +349,7 @@ function edit.keychord_pressed(State, chord, key)
       State.cursor1 = deepcopy(src.cursor)
       State.selection1 = deepcopy(src.selection)
       patch(State.lines, event.after, event.before)
+      patch_placeholders(State.text_line_cache, event.after, event.before)
       -- invalidate various cached bits of lines
       State.lines.current_drawing = nil
       -- if we're scrolling, reclaim all fragments to avoid memory leaks

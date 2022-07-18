@@ -93,8 +93,8 @@ end
 function Text.to_pos(State, x,y)
   for line_index,line in ipairs(State.lines) do
     if line.mode == 'text' then
-      if Text.in_line(State, line, x,y) then
-        return line_index, Text.to_pos_on_line(State, line, x,y)
+      if Text.in_line(State, line_index, x,y) then
+        return line_index, Text.to_pos_on_line(State, line_index, x,y)
       end
     end
   end
@@ -137,7 +137,7 @@ function Text.delete_selection_without_undo(State)
   end
   State.selection1 = {}
   -- delete everything between min (inclusive) and max (exclusive)
-  Text.clear_cache(State.lines[minl])
+  Text.clear_screen_line_cache(State, minl)
   local min_offset = Text.offset(State.lines[minl].data, minp)
   local max_offset = Text.offset(State.lines[maxl].data, maxp)
   if minl == maxl then
@@ -149,6 +149,7 @@ function Text.delete_selection_without_undo(State)
   local rhs = State.lines[maxl].data:sub(max_offset)
   for i=maxl,minl+1,-1 do
     table.remove(State.lines, i)
+    table.remove(State.text_line_cache, i)
   end
   State.lines[minl].data = State.lines[minl].data:sub(1, min_offset-1)..rhs
 end
