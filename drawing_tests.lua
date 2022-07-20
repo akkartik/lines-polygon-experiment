@@ -25,9 +25,9 @@ end
 function test_draw_line()
   io.write('\ntest_draw_line')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  Editor_state.filename = 'foo'
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
+  Editor_state.filename = 'foo'
   Editor_state.lines = load_array{'```lines', '```', ''}
   Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
@@ -130,9 +130,9 @@ end
 function test_cancel_stroke()
   io.write('\ntest_cancel_stroke')
   -- display a drawing followed by a line of text (you shouldn't ever have a drawing right at the end)
-  Editor_state.filename = 'foo'
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
+  Editor_state.filename = 'foo'
   Editor_state.lines = load_array{'```lines', '```', ''}
   Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
@@ -341,9 +341,9 @@ end
 function test_name_point()
   io.write('\ntest_name_point')
   -- create a drawing with a line
-  Editor_state.filename = 'foo'
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
+  Editor_state.filename = 'foo'
   Editor_state.lines = load_array{'```lines', '```', ''}
   Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
@@ -386,9 +386,9 @@ end
 function test_move_point()
   io.write('\ntest_move_point')
   -- create a drawing with a line
-  Editor_state.filename = 'foo'
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
+  Editor_state.filename = 'foo'
   Editor_state.lines = load_array{'```lines', '```', ''}
   Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
@@ -446,9 +446,9 @@ end
 function test_move_point_on_manhattan_line()
   io.write('\ntest_move_point_on_manhattan_line')
   -- create a drawing with a manhattan line
-  Editor_state.filename = 'foo'
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
+  Editor_state.filename = 'foo'
   Editor_state.lines = load_array{'```lines', '```', ''}
   Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'manhattan'
@@ -473,9 +473,9 @@ end
 function test_delete_lines_at_point()
   io.write('\ntest_delete_lines_at_point')
   -- create a drawing with two lines connected at a point
-  Editor_state.filename = 'foo'
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
+  Editor_state.filename = 'foo'
   Editor_state.lines = load_array{'```lines', '```', ''}
   Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
@@ -530,9 +530,9 @@ end
 function test_undo_name_point()
   io.write('\ntest_undo_name_point')
   -- create a drawing with a line
-  Editor_state.filename = 'foo'
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
+  Editor_state.filename = 'foo'
   Editor_state.lines = load_array{'```lines', '```', ''}
   Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
@@ -580,9 +580,9 @@ end
 function test_undo_move_point()
   io.write('\ntest_undo_move_point')
   -- create a drawing with a line
-  Editor_state.filename = 'foo'
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
+  Editor_state.filename = 'foo'
   Editor_state.lines = load_array{'```lines', '```', ''}
   Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
@@ -632,9 +632,9 @@ end
 function test_undo_delete_point()
   io.write('\ntest_undo_delete_point')
   -- create a drawing with two lines connected at a point
-  Editor_state.filename = 'foo'
   App.screen.init{width=Test_margin_left+256, height=300}  -- drawing coordinates 1:1 with pixels
   Editor_state = edit.initialize_test_state()
+  Editor_state.filename = 'foo'
   Editor_state.lines = load_array{'```lines', '```', ''}
   Text.redraw_all(Editor_state)
   Editor_state.current_drawing_mode = 'line'
