@@ -4,15 +4,18 @@ require 'drawing_tests'
 
 -- All drawings span 100% of some conceptual 'page width' and divide it up
 -- into 256 parts.
-function Drawing.draw(State, line)
+function Drawing.draw(State, line_index, y)
+  local line = State.lines[line_index]
+  local line_cache = State.line_cache[line_index]
+  line_cache.starty = y
   local pmx,pmy = App.mouse_x(), App.mouse_y()
-  if pmx < State.right and pmy > line.y and pmy < line.y+Drawing.pixels(line.h, State.width) then
+  if pmx < State.right and pmy > line_cache.starty and pmy < line_cache.starty+Drawing.pixels(line.h, State.width) then
     App.color(Icon_color)
-    love.graphics.rectangle('line', State.left,line.y, State.width,Drawing.pixels(line.h, State.width))
+    love.graphics.rectangle('line', State.left,line_cache.starty, State.width,Drawing.pixels(line.h, State.width))
     if icon[State.current_drawing_mode] then
-      icon[State.current_drawing_mode](State.right-22, line.y+4)
+      icon[State.current_drawing_mode](State.right-22, line_cache.starty+4)
     else
-      icon[State.previous_drawing_mode](State.right-22, line.y+4)
+      icon[State.previous_drawing_mode](State.right-22, line_cache.starty+4)
     end
 
     if App.mouse_down(1) and love.keyboard.isDown('h') then
@@ -27,7 +30,7 @@ function Drawing.draw(State, line)
   end
 
   local mx = Drawing.coord(pmx-State.left, State.width)
-  local my = Drawing.coord(pmy-line.y, State.width)
+  local my = Drawing.coord(pmy-line_cache.starty, State.width)
 
   for _,shape in ipairs(line.shapes) do
     assert(shape)
@@ -36,11 +39,11 @@ function Drawing.draw(State, line)
     else
       App.color(Stroke_color)
     end
-    Drawing.draw_shape(line, shape, line.y, State.left,State.right)
+    Drawing.draw_shape(line, shape, line_cache.starty, State.left,State.right)
   end
 
   local function px(x) return Drawing.pixels(x, State.width)+State.left end
-  local function py(y) return Drawing.pixels(y, State.width)+line.y end
+  local function py(y) return Drawing.pixels(y, State.width)+line_cache.starty end
   for i,p in ipairs(line.points) do
     if p.deleted == nil then
       if Drawing.near(p, mx,my, State.width) then
@@ -70,7 +73,7 @@ function Drawing.draw(State, line)
     end
   end
   App.color(Current_stroke_color)
-  Drawing.draw_pending_shape(State, line, line.y, State.left,State.right)
+  Drawing.draw_pending_shape(State, line, line_cache.starty, State.left,State.right)
 end
 
 function Drawing.draw_shape(drawing, shape, top, left,right)
@@ -205,15 +208,17 @@ function Drawing.draw_polygon(n, cx,cy, x1,y1)
   end
 end
 
-function Drawing.in_drawing(drawing, x,y, left,right)
-  if drawing.y == nil then return false end  -- outside current page
+function Drawing.in_drawing(drawing, line_cache, x,y, left,right)
+  if line_cache.starty == nil then return false end  -- outside current page
   local width = right-left
-  return y >= drawing.y and y < drawing.y + Drawing.pixels(drawing.h, width) and x >= left and x < right
+  return y >= line_cache.starty and y < line_cache.starty + Drawing.pixels(drawing.h, width) and x >= left and x < right
 end
 
-function Drawing.mouse_pressed(State, drawing, x,y, button)
+function Drawing.mouse_pressed(State, drawing_index, x,y, button)
+  local drawing = State.lines[drawing_index]
+  local line_cache = State.line_cache[drawing_index]
   local cx = Drawing.coord(x-State.left, State.width)
-  local cy = Drawing.coord(y-drawing.y, State.width)
+  local cy = Drawing.coord(y-line_cache.starty, State.width)
   if State.current_drawing_mode == 'freehand' then
     drawing.pending = {mode=State.current_drawing_mode, points={{x=cx, y=cy}}}
   elseif State.current_drawing_mode == 'line' or State.current_drawing_mode == 'manhattan' then
@@ -242,12 +247,13 @@ end
 function Drawing.update(State)
   if State.lines.current_drawing == nil then return end
   local drawing = State.lines.current_drawing
+  local line_cache = State.line_cache[State.lines.current_drawing_index]
   assert(drawing.mode == 'drawing')
   local pmx, pmy = App.mouse_x(), App.mouse_y()
   local mx = Drawing.coord(pmx-State.left, State.width)
-  local my = Drawing.coord(pmy-drawing.y, State.width)
+  local my = Drawing.coord(pmy-line_cache.starty, State.width)
   if App.mouse_down(1) then
-    if Drawing.in_drawing(drawing, pmx,pmy, State.left,State.right) then
+    if Drawing.in_drawing(drawing, line_cache, pmx,pmy, State.left,State.right) then
       if drawing.pending.mode == 'freehand' then
         table.insert(drawing.pending.points, {x=mx, y=my})
       elseif drawing.pending.mode == 'move' then
@@ -257,7 +263,7 @@ function Drawing.update(State)
       end
     end
   elseif State.current_drawing_mode == 'move' then
-    if Drawing.in_drawing(drawing, pmx, pmy, State.left,State.right) then
+    if Drawing.in_drawing(drawing, line_cache, pmx, pmy, State.left,State.right) then
       drawing.pending.target_point.x = mx
       drawing.pending.target_point.y = my
       Drawing.relax_constraints(drawing, drawing.pending.target_point_index)
@@ -295,6 +301,7 @@ function Drawing.mouse_released(State, x,y, button)
     end
   elseif State.lines.current_drawing then
     local drawing = State.lines.current_drawing
+    local line_cache = State.line_cache[State.lines.current_drawing_index]
     if drawing.pending then
       if drawing.pending.mode == nil then
         -- nothing pending
@@ -303,14 +310,14 @@ function Drawing.mouse_released(State, x,y, button)
         Drawing.smoothen(drawing.pending)
         table.insert(drawing.shapes, drawing.pending)
       elseif drawing.pending.mode == 'line' then
-        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width)
+        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
         if mx >= 0 and mx < 256 and my >= 0 and my < drawing.h then
           drawing.pending.p2 = Drawing.find_or_insert_point(drawing.points, mx,my, State.width)
           table.insert(drawing.shapes, drawing.pending)
         end
       elseif drawing.pending.mode == 'manhattan' then
         local p1 = drawing.points[drawing.pending.p1]
-        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width)
+        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
         if mx >= 0 and mx < 256 and my >= 0 and my < drawing.h then
           if math.abs(mx-p1.x) > math.abs(my-p1.y) then
             drawing.pending.p2 = Drawing.find_or_insert_point(drawing.points, mx, p1.y, State.width)
@@ -318,13 +325,13 @@ function Drawing.mouse_released(State, x,y, button)
             drawing.pending.p2 = Drawing.find_or_insert_point(drawing.points, p1.x, my, State.width)
           end
           local p2 = drawing.points[drawing.pending.p2]
-          App.mouse_move(State.left+Drawing.pixels(p2.x, State.width), drawing.y+Drawing.pixels(p2.y, State.width))
+          App.mouse_move(State.left+Drawing.pixels(p2.x, State.width), line_cache.starty+Drawing.pixels(p2.y, State.width))
           table.insert(drawing.shapes, drawing.pending)
         end
       elseif drawing.pending.mode == 'rectangle' then
         assert(#drawing.pending.vertices <= 2)
         if #drawing.pending.vertices == 2 then
-          local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width)
+          local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
           if mx >= 0 and mx < 256 and my >= 0 and my < drawing.h then
             local first = drawing.points[drawing.pending.vertices[1]]
             local second = drawing.points[drawing.pending.vertices[2]]
@@ -337,18 +344,18 @@ function Drawing.mouse_released(State, x,y, button)
           -- too few points; draw nothing
         end
       elseif drawing.pending.mode == 'polygon' then
-        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width)
+        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
         drawing.pending.p1 = Drawing.find_or_insert_point(drawing.points, mx,my, State.width)
         table.insert(drawing.shapes, drawing.pending)
       elseif drawing.pending.mode == 'circle' then
-        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width)
+        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
         if mx >= 0 and mx < 256 and my >= 0 and my < drawing.h then
           local center = drawing.points[drawing.pending.center]
           drawing.pending.radius = geom.dist(center.x,center.y, mx,my)
           table.insert(drawing.shapes, drawing.pending)
         end
       elseif drawing.pending.mode == 'arc' then
-        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width)
+        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
         if mx >= 0 and mx < 256 and my >= 0 and my < drawing.h then
           local center = drawing.points[drawing.pending.center]
           drawing.pending.end_angle = geom.angle_with_hint(center.x,center.y, mx,my, drawing.pending.end_angle)
@@ -413,8 +420,8 @@ function Drawing.keychord_pressed(State, chord)
     end
     drawing.pending.mode = 'rectangle'
   elseif App.mouse_down(1) and chord == 'p' and State.current_drawing_mode == 'rectangle' then
-    local _,drawing = Drawing.current_drawing(State)
-    local mx,my = Drawing.coord(App.mouse_x()-State.left, State.width), Drawing.coord(App.mouse_y()-drawing.y, State.width)
+    local _,drawing,line_cache = Drawing.current_drawing(State)
+    local mx,my = Drawing.coord(App.mouse_x()-State.left, State.width), Drawing.coord(App.mouse_y()-line_cache.starty, State.width)
     local j = Drawing.find_or_insert_point(drawing.points, mx,my, State.width)
     while #drawing.pending.vertices >= 2 do
       table.remove(drawing.pending.vertices)
@@ -472,9 +479,9 @@ function Drawing.keychord_pressed(State, chord)
   elseif chord == 'C-o' and not App.mouse_down(1) then
     State.current_drawing_mode = 'circle'
   elseif App.mouse_down(1) and chord == 'a' and State.current_drawing_mode == 'circle' then
-    local _,drawing = Drawing.current_drawing(State)
+    local _,drawing,line_cache = Drawing.current_drawing(State)
     drawing.pending.mode = 'arc'
-    local mx,my = Drawing.coord(App.mouse_x()-State.left, State.width), Drawing.coord(App.mouse_y()-drawing.y, State.width)
+    local mx,my = Drawing.coord(App.mouse_x()-State.left, State.width), Drawing.coord(App.mouse_y()-line_cache.starty, State.width)
     local center = drawing.points[drawing.pending.center]
     drawing.pending.radius = geom.dist(center.x,center.y, mx,my)
     drawing.pending.start_angle = geom.angle(center.x,center.y, mx,my)
@@ -492,7 +499,7 @@ function Drawing.keychord_pressed(State, chord)
     end
     drawing.pending.mode = 'circle'
   elseif chord == 'C-u' and not App.mouse_down(1) then
-    local drawing_index,drawing,i,p = Drawing.select_point_at_mouse(State)
+    local drawing_index,drawing,line_cache,i,p = Drawing.select_point_at_mouse(State)
     if drawing then
       if State.previous_drawing_mode == nil then
         State.previous_drawing_mode = State.current_drawing_mode
@@ -503,7 +510,7 @@ function Drawing.keychord_pressed(State, chord)
       State.lines.current_drawing = drawing
     end
   elseif chord == 'C-n' and not App.mouse_down(1) then
-    local drawing_index,drawing,point_index,p = Drawing.select_point_at_mouse(State)
+    local drawing_index,drawing,line_cache,point_index,p = Drawing.select_point_at_mouse(State)
     if drawing then
       if State.previous_drawing_mode == nil then
         -- don't clobber
@@ -516,7 +523,7 @@ function Drawing.keychord_pressed(State, chord)
       State.lines.current_drawing = drawing
     end
   elseif chord == 'C-d' and not App.mouse_down(1) then
-    local _,drawing,i,p = Drawing.select_point_at_mouse(State)
+    local _,drawing,_,i,p = Drawing.select_point_at_mouse(State)
     if drawing then
       for _,shape in ipairs(drawing.shapes) do
         if Drawing.contains_point(shape, i) then
@@ -525,7 +532,7 @@ function Drawing.keychord_pressed(State, chord)
       end
       drawing.points[i].deleted = true
     end
-    local drawing,_,shape = Drawing.select_shape_at_mouse(State)
+    local drawing,_,_,shape = Drawing.select_shape_at_mouse(State)
     if drawing then
       shape.mode = 'deleted'
     end
@@ -590,8 +597,9 @@ function Drawing.current_drawing(State)
   local x, y = App.mouse_x(), App.mouse_y()
   for drawing_index,drawing in ipairs(State.lines) do
     if drawing.mode == 'drawing' then
-      if Drawing.in_drawing(drawing, x,y, State.left,State.right) then
-        return drawing_index,drawing
+      local line_cache = State.line_cache[drawing_index]
+      if Drawing.in_drawing(drawing, line_cache, x,y, State.left,State.right) then
+        return drawing_index,drawing,line_cache
       end
     end
   end
@@ -599,15 +607,16 @@ function Drawing.current_drawing(State)
 end
 
 function Drawing.select_shape_at_mouse(State)
-  for _,drawing in ipairs(State.lines) do
+  for drawing_index,drawing in ipairs(State.lines) do
     if drawing.mode == 'drawing' then
       local x, y = App.mouse_x(), App.mouse_y()
-      if Drawing.in_drawing(drawing, x,y, State.left,State.right) then
-        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width)
+      local line_cache = State.line_cache[drawing_index]
+      if Drawing.in_drawing(drawing, line_cache, x,y, State.left,State.right) then
+        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
         for i,shape in ipairs(drawing.shapes) do
           assert(shape)
           if geom.on_shape(mx,my, drawing, shape) then
-            return drawing,i,shape
+            return drawing,line_cache,i,shape
           end
         end
       end
@@ -619,12 +628,13 @@ function Drawing.select_point_at_mouse(State)
   for drawing_index,drawing in ipairs(State.lines) do
     if drawing.mode == 'drawing' then
       local x, y = App.mouse_x(), App.mouse_y()
-      if Drawing.in_drawing(drawing, x,y, State.left,State.right) then
-        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-drawing.y, State.width)
+      local line_cache = State.line_cache[drawing_index]
+      if Drawing.in_drawing(drawing, line_cache, x,y, State.left,State.right) then
+        local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
         for i,point in ipairs(drawing.points) do
           assert(point)
           if Drawing.near(point, mx,my, State.width) then
-            return drawing_index,drawing,i,point
+            return drawing_index,drawing,line_cache,i,point
           end
         end
       end
@@ -633,10 +643,11 @@ function Drawing.select_point_at_mouse(State)
 end
 
 function Drawing.select_drawing_at_mouse(State)
-  for _,drawing in ipairs(State.lines) do
+  for drawing_index,drawing in ipairs(State.lines) do
     if drawing.mode == 'drawing' then
       local x, y = App.mouse_x(), App.mouse_y()
-      if Drawing.in_drawing(drawing, x,y, State.left,State.right) then
+      local line_cache = State.line_cache[drawing_index]
+      if Drawing.in_drawing(drawing, line_cache, x,y, State.left,State.right) then
         return drawing
       end
     end
