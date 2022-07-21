@@ -378,7 +378,7 @@ function Drawing.keychord_pressed(State, chord)
     State.current_drawing_mode = 'freehand'
   elseif App.mouse_down(1) and chord == '2' then
     State.current_drawing_mode = 'line'
-    local _,drawing = Drawing.current_drawing()
+    local _,drawing = Drawing.current_drawing(State)
     if drawing.pending.mode == 'freehand' then
       drawing.pending.p1 = Drawing.insert_point(drawing.points, drawing.pending.points[1].x, drawing.pending.points[1].y)
     elseif drawing.pending.mode == 'rectangle' then
