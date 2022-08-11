@@ -17,7 +17,7 @@ function Text.draw(State, line_index, y, startpos)
   -- wrap long lines
   local x = State.left
   local pos = 1
-  local screen_line_starting_pos = 1
+  local screen_line_starting_pos = State.screen_top1.pos
   if line_cache.fragments == nil then
     Text.compute_fragments(State, line_index)
   end
@@ -206,8 +206,12 @@ function Text.keychord_pressed(State, chord)
       end
       State.cursor1.line = State.cursor1.line-1
     end
-    if Text.lt1(State.cursor1, State.screen_top1) then
-      local top2 = Text.to2(State, State.screen_top1, State.left, State.right)
+    if State.screen_top1.line > #State.lines then
+      Text.populate_screen_line_starting_pos(State, #State.lines)
+      local line_cache = State.line_cache[#State.line_cache]
+      State.screen_top1 = {line=#State.lines, pos=line_cache.screen_line_starting_pos[#line_cache.screen_line_starting_pos]}
+    elseif Text.lt1(State.cursor1, State.screen_top1) then
+      local top2 = Text.to2(State, State.screen_top1)
       top2 = Text.previous_screen_line(State, top2, State.left, State.right)
       State.screen_top1 = Text.to1(State, top2)
       Text.redraw_all(State)  -- if we're scrolling, reclaim all fragments to avoid memory leaks
