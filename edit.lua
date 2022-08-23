@@ -130,6 +130,7 @@ function edit.fixup_cursor(State)
 end
 
 function edit.draw(State)
+  State.button_handlers = {}
   App.color(Text_color)
   assert(#State.lines == #State.line_cache)
   if not Text.le1(State.screen_top1, State.cursor1) then
@@ -153,7 +154,7 @@ function edit.draw(State)
       end
       if line.data == '' then
         -- button to insert new drawing
-        button('draw', {x=4,y=y+4, w=12,h=12, color={1,1,0},
+        button(State, 'draw', {x=4,y=y+4, w=12,h=12, color={1,1,0},
           icon = icon.insert_drawing,
           onpress1 = function()
                        Drawing.before = snapshot(State, line_index-1, line_index)
@@ -209,7 +210,10 @@ end
 function edit.mouse_pressed(State, x,y, mouse_button)
   if State.search_term then return end
 --?   print('press', State.selection1.line, State.selection1.pos)
-  propagate_to_button_handlers(x,y, mouse_button)
+  if mouse_press_consumed_by_any_button_handler(State, x,y, mouse_button) then
+    -- press on a button and it returned 'true' to short-circuit
+    return
+  end
 
   for line_index,line in ipairs(State.lines) do
     if line.mode == 'text' then
@@ -499,25 +503,25 @@ function edit.run_after_keychord(State, chord)
   edit.draw(State)
 end
 
-function edit.run_after_mouse_click(State, x,y, button)
-  App.fake_mouse_press(x,y, button)
-  edit.mouse_pressed(State, x,y, button)
-  App.fake_mouse_release(x,y, button)
-  edit.mouse_released(State, x,y, button)
+function edit.run_after_mouse_click(State, x,y, mouse_button)
+  App.fake_mouse_press(x,y, mouse_button)
+  edit.mouse_pressed(State, x,y, mouse_button)
+  App.fake_mouse_release(x,y, mouse_button)
+  edit.mouse_released(State, x,y, mouse_button)
   App.screen.contents = {}
   edit.draw(State)
 end
 
-function edit.run_after_mouse_press(State, x,y, button)
-  App.fake_mouse_press(x,y, button)
-  edit.mouse_pressed(State, x,y, button)
+function edit.run_after_mouse_press(State, x,y, mouse_button)
+  App.fake_mouse_press(x,y, mouse_button)
+  edit.mouse_pressed(State, x,y, mouse_button)
   App.screen.contents = {}
   edit.draw(State)
 end
 
-function edit.run_after_mouse_release(State, x,y, button)
-  App.fake_mouse_release(x,y, button)
-  edit.mouse_released(State, x,y, button)
+function edit.run_after_mouse_release(State, x,y, mouse_button)
+  App.fake_mouse_release(x,y, mouse_button)
+  edit.mouse_released(State, x,y, mouse_button)
   App.screen.contents = {}
   edit.draw(State)
 end
