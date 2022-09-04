@@ -383,7 +383,7 @@ function Drawing.keychord_pressed(State, chord)
     State.current_drawing_mode = 'line'
     local _,drawing = Drawing.current_drawing(State)
     if drawing.pending.mode == 'freehand' then
-      drawing.pending.p1 = Drawing.insert_point(drawing.points, drawing.pending.points[1].x, drawing.pending.points[1].y)
+      drawing.pending.p1 = Drawing.find_or_insert_point(drawing.points, drawing.pending.points[1].x, drawing.pending.points[1].y)
     elseif drawing.pending.mode == 'rectangle' then
       drawing.pending.p1 = drawing.pending.vertices[1]
     elseif drawing.pending.mode == 'polygon' or drawing.pending.mode == 'circle' or drawing.pending.mode == 'arc' then
@@ -694,11 +694,6 @@ end
 
 function round(num)
   return math.floor(num+.5)
-end
-
-function Drawing.insert_point(points, x,y)
-  table.insert(points, {x=x, y=y})
-  return #points
 end
 
 function Drawing.find_or_insert_point(points, x,y, width)
