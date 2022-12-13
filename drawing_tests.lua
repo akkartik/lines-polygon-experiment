@@ -162,7 +162,7 @@ function test_keys_do_not_affect_shape_when_mouse_up()
   edit.draw(Editor_state)
   -- hover over drawing and press 'o' without holding mouse
   App.mouse_move(Editor_state.left+4, Editor_state.top+Drawing_padding_top+4)  -- hover on drawing
-  edit.run_after_keychord(Editor_state, 'o')
+  edit.run_after_textinput(Editor_state, 'o')
   -- no change to drawing mode
   check_eq(Editor_state.current_drawing_mode, 'line', 'F - test_keys_do_not_affect_shape_when_mouse_up/drawing_mode')
   -- no change to text either because we didn't run the textinput event
@@ -185,7 +185,7 @@ function test_draw_circle_mid_stroke()
   -- draw a circle
   App.mouse_move(Editor_state.left+4, Editor_state.top+Drawing_padding_top+4)  -- hover on drawing
   edit.run_after_mouse_press(Editor_state, Editor_state.left+35, Editor_state.top+Drawing_padding_top+36, 1)
-  edit.run_after_keychord(Editor_state, 'o')
+  edit.run_after_textinput(Editor_state, 'o')
   edit.run_after_mouse_release(Editor_state, Editor_state.left+35+30, Editor_state.top+Drawing_padding_top+36, 1)
   local drawing = Editor_state.lines[1]
   check_eq(#drawing.shapes, 1, 'F - test_draw_circle_mid_stroke/#shapes')
@@ -214,7 +214,7 @@ function test_draw_arc()
   -- draw an arc
   edit.run_after_mouse_press(Editor_state, Editor_state.left+35, Editor_state.top+Drawing_padding_top+36, 1)
   App.mouse_move(Editor_state.left+35+30, Editor_state.top+Drawing_padding_top+36)
-  edit.run_after_keychord(Editor_state, 'a')  -- arc mode
+  edit.run_after_textinput(Editor_state, 'a')  -- arc mode
   edit.run_after_mouse_release(Editor_state, Editor_state.left+35+50, Editor_state.top+Drawing_padding_top+36+50, 1)  -- 45°
   local drawing = Editor_state.lines[1]
   check_eq(#drawing.shapes, 1, 'F - test_draw_arc/#shapes')
@@ -246,7 +246,7 @@ function test_draw_polygon()
   -- start a stroke
   edit.run_after_mouse_press(Editor_state, Editor_state.left+35, Editor_state.top+Drawing_padding_top+36, 1)
   -- switch to polygon mode
-  edit.run_after_keychord(Editor_state, '5')
+  edit.run_after_textinput(Editor_state, '5')
   edit.run_after_mouse_release(Editor_state, Editor_state.left+55, Editor_state.top+Drawing_padding_top+26, 1)
   local drawing = Editor_state.lines[1]
   check_eq(#drawing.shapes, 1, 'F - test_draw_polygon/#shapes')
@@ -272,13 +272,13 @@ function test_draw_rectangle()
   check_eq(#Editor_state.lines[1].shapes, 0, 'F - test_draw_rectangle/baseline/#shapes')
   -- first point
   edit.run_after_mouse_press(Editor_state, Editor_state.left+35, Editor_state.top+Drawing_padding_top+36, 1)
-  edit.run_after_keychord(Editor_state, 'r')  -- rectangle mode
+  edit.run_after_textinput(Editor_state, 'r')  -- rectangle mode
   -- second point/first edge
   App.mouse_move(Editor_state.left+42, Editor_state.top+Drawing_padding_top+45)
-  edit.run_after_keychord(Editor_state, 'p')
+  edit.run_after_textinput(Editor_state, 'p')
   -- override second point/first edge
   App.mouse_move(Editor_state.left+75, Editor_state.top+Drawing_padding_top+76)
-  edit.run_after_keychord(Editor_state, 'p')
+  edit.run_after_textinput(Editor_state, 'p')
   -- release (decides 'thickness' of rectangle perpendicular to first edge)
   edit.run_after_mouse_release(Editor_state, Editor_state.left+15, Editor_state.top+Drawing_padding_top+26, 1)
   local drawing = Editor_state.lines[1]
@@ -317,13 +317,13 @@ function test_draw_rectangle_intermediate()
   check_eq(#Editor_state.lines[1].shapes, 0, 'F - test_draw_rectangle_intermediate/baseline/#shapes')
   -- first point
   edit.run_after_mouse_press(Editor_state, Editor_state.left+35, Editor_state.top+Drawing_padding_top+36, 1)
-  edit.run_after_keychord(Editor_state, 'r')  -- rectangle mode
+  edit.run_after_textinput(Editor_state, 'r')  -- rectangle mode
   -- second point/first edge
   App.mouse_move(Editor_state.left+42, Editor_state.top+Drawing_padding_top+45)
-  edit.run_after_keychord(Editor_state, 'p')
+  edit.run_after_textinput(Editor_state, 'p')
   -- override second point/first edge
   App.mouse_move(Editor_state.left+75, Editor_state.top+Drawing_padding_top+76)
-  edit.run_after_keychord(Editor_state, 'p')
+  edit.run_after_textinput(Editor_state, 'p')
   local drawing = Editor_state.lines[1]
   check_eq(#drawing.points, 3, 'F - test_draw_rectangle_intermediate/#points')  -- currently includes every point added
   local pending = drawing.pending
