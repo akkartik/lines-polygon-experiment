@@ -106,8 +106,9 @@ found anything amiss: http://akkartik.name/contact
 
 ## Mirrors and Forks
 
-This repo is a fork of [lines.love](http://akkartik.name/lines.html). Updates
-to it can be downloaded from:
+This repo is a fork of [lines.love](http://akkartik.name/lines.html), an
+editor for plain text where you can also seamlessly insert line drawings.
+Updates to it can be downloaded from:
 
 * https://github.com/akkartik/lines-polygon-experiment
 
