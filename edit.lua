@@ -124,8 +124,10 @@ function edit.check_locs(State)
 end
 
 function edit.invalid1(State, loc1)
-  return loc1.line > #State.lines
-      or loc1.pos > #State.lines[loc1.line].data
+  if loc1.line > #State.lines then return true end
+  local l = State.lines[loc1.line]
+  if l.mode ~= 'text' then return false end  -- pos is irrelevant to validity for a drawing line
+  return loc1.pos > #State.lines[loc1.line].data
 end
 
 function edit.cursor_on_text(State)
@@ -226,7 +228,7 @@ end
 
 function edit.mouse_press(State, x,y, mouse_button)
   if State.search_term then return end
---?   print('press', State.selection1.line, State.selection1.pos)
+--?   print('press', State.cursor1.line)
   if mouse_press_consumed_by_any_button_handler(State, x,y, mouse_button) then
     -- press on a button and it returned 'true' to short-circuit
     return
@@ -269,7 +271,7 @@ end
 
 function edit.mouse_release(State, x,y, mouse_button)
   if State.search_term then return end
---?   print('release')
+--?   print('release', State.cursor1.line)
   if State.lines.current_drawing then
     Drawing.mouse_release(State, x,y, mouse_button)
     schedule_save(State)
@@ -321,11 +323,12 @@ function edit.mouse_wheel_move(State, dx,dy)
 end
 
 function edit.text_input(State, t)
+--?   print('text input', t)
   if State.search_term then
     State.search_term = State.search_term..t
     State.search_text = nil
     Text.search_next(State)
-  elseif State.current_drawing_mode == 'name' then
+  elseif State.lines.current_drawing and State.current_drawing_mode == 'name' then
     local before = snapshot(State, State.lines.current_drawing_index)
     local drawing = State.lines.current_drawing
     local p = drawing.points[drawing.pending.target_point]
@@ -478,7 +481,7 @@ function edit.keychord_press(State, chord, key)
         line.show_help = false
       end
     end
-  elseif State.current_drawing_mode == 'name' then
+  elseif State.lines.current_drawing and State.current_drawing_mode == 'name' then
     if chord == 'return' then
       State.current_drawing_mode = State.previous_drawing_mode
       State.previous_drawing_mode = nil
@@ -491,10 +494,12 @@ function edit.keychord_press(State, chord, key)
         record_undo_event(State, {before=before, after=snapshot(State, State.lines.current_drawing_index)})
       elseif chord == 'backspace' then
         local len = utf8.len(p.name)
-        local byte_offset = Text.offset(p.name, len-1)
-        if len == 1 then byte_offset = 0 end
-        p.name = string.sub(p.name, 1, byte_offset)
-        record_undo_event(State, {before=before, after=snapshot(State, State.lines.current_drawing_index)})
+        if len > 0 then
+          local byte_offset = Text.offset(p.name, len-1)
+          if len == 1 then byte_offset = 0 end
+          p.name = string.sub(p.name, 1, byte_offset)
+          record_undo_event(State, {before=before, after=snapshot(State, State.lines.current_drawing_index)})
+        end
       end
     end
     schedule_save(State)
