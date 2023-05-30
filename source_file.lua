@@ -1,5 +1,4 @@
 -- primitives for saving to file and loading from file
-
 function file_exists(filename)
   local infile = App.open_for_reading(filename)
   if infile then
@@ -68,12 +67,19 @@ function load_drawing(infile_next_line)
       name = shape.p2.name
       shape.p2 = Drawing.find_or_insert_point(drawing.points, shape.p2.x, shape.p2.y, --[[large width to minimize overlap]] 1600)
       drawing.points[shape.p2].name = name
-    elseif shape.mode == 'polygon' or shape.mode == 'rectangle' or shape.mode == 'square' then
+    elseif shape.mode == 'rectangle' then
       for i,p in ipairs(shape.vertices) do
         local name = p.name
         shape.vertices[i] = Drawing.find_or_insert_point(drawing.points, p.x,p.y, --[[large width to minimize overlap]] 1600)
         drawing.points[shape.vertices[i]].name = name
       end
+    elseif shape.mode == 'polygon' then
+      local name = shape.center.name
+      shape.center = Drawing.find_or_insert_point(drawing.points, shape.center.x,shape.center.y, --[[large width to minimize overlap]] 1600)
+      drawing.points[shape.center].name = name
+      local name = shape.p1.name
+      shape.p1 = Drawing.find_or_insert_point(drawing.points, shape.p1.x,shape.p1.y, --[[large width to minimize overlap]] 1600)
+      drawing.points[shape.p1].name = name
     elseif shape.mode == 'circle' or shape.mode == 'arc' then
       local name = shape.center.name
       shape.center = Drawing.find_or_insert_point(drawing.points, shape.center.x,shape.center.y, --[[large width to minimize overlap]] 1600)
@@ -93,21 +99,29 @@ function store_drawing(outfile, drawing)
   outfile:write('```lines\n')
   for _,shape in ipairs(drawing.shapes) do
     if shape.mode == 'freehand' then
-      outfile:write(json.encode(shape), '\n')
+      outfile:write(json.encode(shape))
+      outfile:write('\n')
     elseif shape.mode == 'line' or shape.mode == 'manhattan' then
       local line = json.encode({mode=shape.mode, p1=drawing.points[shape.p1], p2=drawing.points[shape.p2]})
-      outfile:write(line, '\n')
-    elseif shape.mode == 'polygon' or shape.mode == 'rectangle' or shape.mode == 'square' then
+      outfile:write(line)
+      outfile:write('\n')
+    elseif shape.mode == 'rectangle' then
       local obj = {mode=shape.mode, vertices={}}
       for _,p in ipairs(shape.vertices) do
         table.insert(obj.vertices, drawing.points[p])
       end
       local line = json.encode(obj)
-      outfile:write(line, '\n')
+      outfile:write(line)
+      outfile:write('\n')
+    elseif shape.mode == 'polygon' then
+      outfile:write(json.encode({mode=shape.mode, num_vertices=shape.num_vertices, center=drawing.points[shape.center], p1=drawing.points[shape.p1]}))
+      outfile:write('\n')
     elseif shape.mode == 'circle' then
-      outfile:write(json.encode({mode=shape.mode, center=drawing.points[shape.center], radius=shape.radius}), '\n')
+      outfile:write(json.encode({mode=shape.mode, center=drawing.points[shape.center], radius=shape.radius}))
+      outfile:write('\n')
     elseif shape.mode == 'arc' then
-      outfile:write(json.encode({mode=shape.mode, center=drawing.points[shape.center], radius=shape.radius, start_angle=shape.start_angle, end_angle=shape.end_angle}), '\n')
+      outfile:write(json.encode({mode=shape.mode, center=drawing.points[shape.center], radius=shape.radius, start_angle=shape.start_angle, end_angle=shape.end_angle}))
+      outfile:write('\n')
     elseif shape.mode == 'deleted' then
       -- ignore
     else
@@ -134,9 +148,7 @@ function load_array(a)
       table.insert(result, drawing)
     else
 --?       print('inserting text')
-      local line_info = {mode='text'}
-      line_info.data = line
-      table.insert(result, line_info)
+      table.insert(result, {mode='text', data=line})
     end
   end
   if #result == 0 then
@@ -163,12 +175,19 @@ function load_drawing_from_array(iter, a, i)
       name = shape.p2.name
       shape.p2 = Drawing.find_or_insert_point(drawing.points, shape.p2.x, shape.p2.y, --[[large width to minimize overlap]] 1600)
       drawing.points[shape.p2].name = name
-    elseif shape.mode == 'polygon' or shape.mode == 'rectangle' or shape.mode == 'square' then
+    elseif shape.mode == 'rectangle' then
       for i,p in ipairs(shape.vertices) do
         local name = p.name
         shape.vertices[i] = Drawing.find_or_insert_point(drawing.points, p.x,p.y, --[[large width to minimize overlap]] 1600)
         drawing.points[shape.vertices[i]].name = name
       end
+    elseif shape.mode == 'polygon' then
+      local name = shape.center.name
+      shape.center = Drawing.find_or_insert_point(drawing.points, shape.center.x,shape.center.y, --[[large width to minimize overlap]] 1600)
+      drawing.points[shape.center].name = name
+      local name = shape.p1.name
+      shape.p1 = Drawing.find_or_insert_point(drawing.points, shape.p1.x,shape.p1.y, --[[large width to minimize overlap]] 1600)
+      drawing.points[shape.p1].name = name
     elseif shape.mode == 'circle' or shape.mode == 'arc' then
       local name = shape.center.name
       shape.center = Drawing.find_or_insert_point(drawing.points, shape.center.x,shape.center.y, --[[large width to minimize overlap]] 1600)
