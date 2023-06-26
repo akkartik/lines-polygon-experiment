@@ -108,6 +108,7 @@ editor for plain text where you can also seamlessly insert line drawings.
 Updates to it can be downloaded from:
 
 * https://github.com/akkartik/lines-polygon-experiment
+* https://nest.pijul.com/akkartik/lines-polygon-experiment (using the Pijul version control system)
 
 Further forks are encouraged. If you show me your fork, I'll link to it here.
 
