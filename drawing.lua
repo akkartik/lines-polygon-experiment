@@ -33,7 +33,6 @@ function Drawing.draw(State, line_index, y)
   local my = Drawing.coord(pmy-line_cache.starty, State.width)
 
   for _,shape in ipairs(line.shapes) do
-    assert(shape)
     if geom.on_shape(mx,my, line, shape) then
       App.color(Focus_stroke_color)
     else
@@ -117,8 +116,7 @@ function Drawing.draw_shape(drawing, shape, top, left,right)
   elseif shape.mode == 'deleted' then
     -- ignore
   else
-    print(shape.mode)
-    assert(false)
+    assert(false, ('unknown drawing mode %s'):format(shape.mode))
   end
 end
 
@@ -194,8 +192,7 @@ function Drawing.draw_pending_shape(State, drawing, top, left,right)
   elseif shape.mode == 'name' then
     -- nothing pending; changes are immediately committed
   else
-    print(shape.mode)
-    assert(false)
+    assert(false, ('unknown drawing mode %s'):format(shape.mode))
   end
 end
 
@@ -241,8 +238,7 @@ function Drawing.mouse_press(State, drawing_index, x,y, mouse_button)
   elseif State.current_drawing_mode == 'name' then
     -- nothing
   else
-    print(State.current_drawing_mode)
-    assert(false)
+    assert(false, ('unknown drawing mode %s'):format(State.current_drawing_mode))
   end
 end
 
@@ -257,7 +253,7 @@ function Drawing.update(State)
     -- just skip this frame
     return
   end
-  assert(drawing.mode == 'drawing')
+  assert(drawing.mode == 'drawing', 'Drawing.update: line is not a drawing')
   local pmx, pmy = App.mouse_x(), App.mouse_y()
   local mx = Drawing.coord(pmx-State.left, State.width)
   local my = Drawing.coord(pmy-line_cache.starty, State.width)
@@ -338,7 +334,7 @@ function Drawing.mouse_release(State, x,y, mouse_button)
           table.insert(drawing.shapes, drawing.pending)
         end
       elseif drawing.pending.mode == 'rectangle' then
-        assert(#drawing.pending.vertices <= 2)
+        assert(#drawing.pending.vertices <= 2, 'Drawing.mouse_release: rectangle has too many pending vertices')
         if #drawing.pending.vertices == 2 then
           local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
           if mx >= 0 and mx < 256 and my >= 0 and my < drawing.h then
@@ -373,8 +369,7 @@ function Drawing.mouse_release(State, x,y, mouse_button)
       elseif drawing.pending.mode == 'name' then
         -- drop it
       else
-        print(drawing.pending.mode)
-        assert(false)
+        assert(false, ('unknown drawing mode %s'):format(drawing.pending.mode))
       end
       State.lines.current_drawing.pending = {}
       State.lines.current_drawing = nil
@@ -623,7 +618,6 @@ function Drawing.select_shape_at_mouse(State)
       if Drawing.in_drawing(drawing, line_cache, x,y, State.left,State.right) then
         local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
         for i,shape in ipairs(drawing.shapes) do
-          assert(shape)
           if geom.on_shape(mx,my, drawing, shape) then
             return drawing,line_cache,i,shape
           end
@@ -641,7 +635,6 @@ function Drawing.select_point_at_mouse(State)
       if Drawing.in_drawing(drawing, line_cache, x,y, State.left,State.right) then
         local mx,my = Drawing.coord(x-State.left, State.width), Drawing.coord(y-line_cache.starty, State.width)
         for i,point in ipairs(drawing.points) do
-          assert(point)
           if Drawing.near(point, mx,my, State.width) then
             return drawing_index,drawing,line_cache,i,point
           end
@@ -680,13 +673,12 @@ function Drawing.contains_point(shape, p)
   elseif shape.mode == 'deleted' then
     -- already done
   else
-    print(shape.mode)
-    assert(false)
+    assert(false, ('unknown drawing mode %s'):format(shape.mode))
   end
 end
 
 function Drawing.smoothen(shape)
-  assert(shape.mode == 'freehand')
+  assert(shape.mode == 'freehand', 'can only smoothen freehand shapes')
   for _=1,7 do
     for i=2,#shape.points-1 do
       local a = shape.points[i-1]
