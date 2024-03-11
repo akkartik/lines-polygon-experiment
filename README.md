@@ -108,9 +108,10 @@ This repo is a fork of [lines.love](http://akkartik.name/lines.html), an
 editor for plain text where you can also seamlessly insert line drawings.
 Updates to it can be downloaded from:
 
-* https://github.com/akkartik/lines-polygon-experiment
 * https://git.sr.ht/~akkartik/lines-polygon-experiment
 * https://tildegit.org/akkartik/lines-polygon-experiment
+* https://git.merveilles.town/akkartik/lines-polygon-experiment
+* https://github.com/akkartik/lines-polygon-experiment
 * https://nest.pijul.com/akkartik/lines-polygon-experiment (using the Pijul version control system)
 
 Further forks are encouraged. If you show me your fork, I'll link to it here.
