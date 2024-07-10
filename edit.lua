@@ -397,7 +397,7 @@ function edit.keychord_press(State, chord, key)
       State.cursor1 = State.search_backup.cursor
       State.screen_top1 = State.search_backup.screen_top
       State.search_backup = nil
-      Text.redraw_all(State)  -- if we're scrolling, reclaim all fragments to avoid memory leaks
+      Text.redraw_all(State)  -- if we're scrolling, reclaim all line caches to avoid memory leaks
     elseif chord == 'return' then
       State.search_term = nil
       State.search_backup = nil
@@ -442,11 +442,9 @@ function edit.keychord_press(State, chord, key)
       State.cursor1 = deepcopy(src.cursor)
       State.selection1 = deepcopy(src.selection)
       patch(State.lines, event.after, event.before)
-      patch_placeholders(State.line_cache, event.after, event.before)
       -- invalidate various cached bits of lines
       State.lines.current_drawing = nil
-      -- if we're scrolling, reclaim all fragments to avoid memory leaks
-      Text.redraw_all(State)
+      Text.redraw_all(State)  -- if we're scrolling, reclaim all line caches to avoid memory leaks
       schedule_save(State)
     end
   elseif chord == 'C-y' then
@@ -459,8 +457,7 @@ function edit.keychord_press(State, chord, key)
       patch(State.lines, event.before, event.after)
       -- invalidate various cached bits of lines
       State.lines.current_drawing = nil
-      -- if we're scrolling, reclaim all fragments to avoid memory leaks
-      Text.redraw_all(State)
+      Text.redraw_all(State)  -- if we're scrolling, reclaim all line caches to avoid memory leaks
       schedule_save(State)
     end
   -- clipboard
