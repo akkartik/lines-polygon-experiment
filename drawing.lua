@@ -220,7 +220,7 @@ function Drawing.in_drawing(State, line_index, x,y, left,right)
   return y >= starty and y < starty + Drawing.pixels(drawing.h, width) and x >= left and x < right
 end
 
-function Drawing.mouse_press(State, drawing_index, x,y, mouse_button)
+function Drawing.mouse_press(State, drawing_index, x,y, mouse_button, is_touch, presses)
   local drawing = State.lines[drawing_index]
   local starty = Text.starty(State, drawing_index)
   local cx = Drawing.coord(x-State.left, State.width)
@@ -302,7 +302,7 @@ function Drawing.relax_constraints(drawing, p)
   end
 end
 
-function Drawing.mouse_release(State, x,y, mouse_button)
+function Drawing.mouse_release(State, x,y, mouse_button, is_touch, presses)
   if State.current_drawing_mode == 'move' then
     State.current_drawing_mode = State.previous_drawing_mode
     State.previous_drawing_mode = nil
@@ -383,7 +383,7 @@ function Drawing.mouse_release(State, x,y, mouse_button)
   end
 end
 
-function Drawing.keychord_press(State, chord)
+function Drawing.keychord_press(State, chord, key, scancode, is_repeat)
   if chord == 'C-p' and not App.mouse_down(1) then
     State.current_drawing_mode = 'freehand'
   elseif App.mouse_down(1) and chord == '2' then
